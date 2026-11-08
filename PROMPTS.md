@@ -2210,3 +2210,10 @@ Review METECHQ commit d0e7df4 and fix these remaining Security Center accuracy i
 
 Report the code changes, test results, and any remaining issues.
 ```
+
+
+### C46 - Rerun backend checks after setup issue clears, update exact audit results, and correct badge wording
+
+```text
+Ask Antigravity to rerun the backend checks after the setup issue clears, rerun both dependency audits against the committed files, update the report with those exact results, and correct the badge wording. Once the updated commit has passing backend and frontend checks, the handover will be much more reliable.
+```

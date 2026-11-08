@@ -176,7 +176,7 @@ const SecurityCenter = () => {
           border: '1px solid rgba(245, 158, 11, 0.25)',
           fontWeight: 600
         }}>
-          📋 Dependency Audit Pass
+          📋 Dependency Audit Findings
         </span>
       );
     }
@@ -190,7 +190,7 @@ const SecurityCenter = () => {
         border: '1px solid rgba(107, 114, 128, 0.25)',
         fontWeight: 600
       }}>
-        ◌ Hosted Scope Pending
+        ◌ Hosted Scope Unverified
       </span>
     );
   };

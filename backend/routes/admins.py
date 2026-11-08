@@ -459,7 +459,7 @@ async def get_security_overview(current_admin: dict = Depends(get_current_admin)
             "evidence_type": "dependency_audit_report",
             "verification_scope": "Authoritative frontend/yarn.lock (yarn audit)",
             "description": "yarn audit reports 40 vulnerabilities (8 Low, 23 Moderate, 9 High) in CRA react-scripts toolchain.",
-            "evidence": "frontend/yarn.lock (recorded audit pass: 40 advisories in build toolchain; CI builds with yarn install --frozen-lockfile)",
+            "evidence": "frontend/yarn.lock (recorded audit report: 40 advisories in build toolchain; CI builds with yarn install --frozen-lockfile)",
             "last_verified": None,
             "is_live_check": False
         },
@@ -471,7 +471,7 @@ async def get_security_overview(current_admin: dict = Depends(get_current_admin)
             "evidence_type": "dependency_audit_report",
             "verification_scope": "backend/requirements.txt (pip-audit)",
             "description": "pip-audit reports 102 advisories across 18 pinned packages (multipart resolved; runtime compatibility updated).",
-            "evidence": "backend/requirements.txt (recorded audit pass: 18 pinned packages require staged major migration)",
+            "evidence": "backend/requirements.txt (recorded audit report: 18 pinned packages require staged major migration)",
             "last_verified": None,
             "is_live_check": False
         },
