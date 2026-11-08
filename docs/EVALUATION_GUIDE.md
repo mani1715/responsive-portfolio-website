@@ -7,10 +7,10 @@ This document provides an evidence map for evaluation against the rubric. Deploy
 | Area | Marks | Review evidence |
 | --- | ---: | --- |
 | Security | 35 | `THREATS.md`, `SECURITY_SETUP.md`; token realms, ownership checks, permission dependencies, uploads, URL validation, sanitization, cryptographic audit hash chaining, and public/admin security views |
-| Threat analysis and testing | 15 | Threat register; isolated test runner (`scripts/run_evaluation_tests.py`, 103 passed tests); saved verification reports; rerun pip-audit and npm audit |
+| Threat analysis and testing | 15 | Threat register; isolated test runner (`scripts/run_evaluation_tests.py`, 108 passed tests: 59 pytest + 37 admin CRUD + 12 client isolation); saved verification reports; rerun pip-audit and yarn audit |
 | Functionality | 15 | Public portfolio with search/filter/details/repaired deployed links; admin editing; client project workspace, milestones/tasks, files and communication |
 | AI usage and prompt documentation | 15 | `PROMPTS.md`: chronologically ordered prompts without timestamps; detailed implementation choices and corrected suggestions |
-| Engineering quality | 10 | Shared API/services, URL/image handling, explicit loading/error/empty states, bounded API pagination, reproducible tests (17 frontend tests passing, clean production build) |
+| Engineering quality | 10 | Shared API/services, URL/image handling, explicit loading/error/empty states, bounded API pagination, reproducible tests (17 frontend tests passing, clean production build via `yarn build`) |
 | Documentation, deployment and demo | 10 | README, this guide, portfolio/client guide, verification reports; hosted release checks remain pending |
 | Total | 100 | Assessor determines marks based on the delivered evidence |
 
@@ -18,13 +18,14 @@ This document provides an evidence map for evaluation against the rubric. Deploy
 
 1. **Public homepage and navigation**: explain mocha/champagne/amber design, footer link to **Security & Privacy (`/security`)**, and visible client portal entry.
 2. **Our work & portfolio**: search/filter, open case studies (including Aishu Foods and Photography & Creative Portfolio), test live demo links (verified functional across all 8 showcase demos).
-3. **Public Security & Privacy Page (`/security`)**: show the plain-language breakdown of authentication isolation, client project data boundaries, file upload controls, and responsible disclosure contact (`security@metechq.com`).
-4. **Admin Security Center (`/admin/security`)**: sign in as administrator; open the Security Center showing real-time control verification statuses (`Verified`, `Needs attention`, `Not verified`), cryptographic SHA-256 audit log hash-chain verification, and architecture boundary notes.
+3. **Public Security & Privacy Page (`/security`)**: show the plain-language breakdown of authentication isolation, signed JWT tokens, client project data boundaries, file upload controls, honest operational limits, and responsible disclosure intake.
+4. **Admin Security Center (`/admin/security`)**: sign in as administrator; open the Security Center showing real-time control verification statuses (`Verified`, `Needs attention`, `Not verified`), cryptographic SHA-256 audit log hash-chain verification with complete scan coverage, and architecture boundary notes.
 5. **Client workspace isolation**: demonstrate that client credentials can only access their assigned project ID. Show that accessing another client's project returns 404/401.
 6. **Repaired defects and security hardening**:
    - Fixed live demo navigation blocking bug in `ProjectCard.jsx`, `QuickViewModal.jsx`, and `PortfolioItemPage.jsx`.
-   - Added backend-protected `/api/admins/security-overview` endpoint with automated regression tests.
-   - Performed dependency audits (`npm audit` reduced by 27 vulnerabilities; `pip-audit` identified 117 advisories in 19 pinned packages).
+   - Fixed audit log verification schema integration and added 5 new regression tests covering empty logs, intact chains, tampered records, sequence gaps, legacy entries, and truncated scan detection.
+   - Unified frontend build with authoritative `frontend/yarn.lock` (removed `package-lock.json`) and documented build-toolchain findings.
+   - Upgraded compatible runtime backend dependencies in `backend/requirements.txt` (`python-multipart`, `cryptography`, `urllib3`, `certifi`, `PyJWT`, `anyio`), eliminating multipart vulnerabilities.
 7. **Documentation**: Open `PROMPTS.md`, `THREATS.md`, and `SECURITY_SETUP.md`; acknowledge remaining hosting/multi-worker Redis requirements.
 
 ## 3. Before the assessment

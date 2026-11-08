@@ -11,7 +11,7 @@ METECHQ implements defense-in-depth across the application lifecycle:
 1. **Dual Secret Domain Isolation**:
    - `JWT_SECRET`: Admin dashboard authentication.
    - `CLIENT_JWT_SECRET`: Independent client portal authentication.
-   - Even if one secret realm is rotated or invalidated, the other realm remains securely isolated. Mutual exclusion checks prevent cross-realm access.
+   - Distinct HMAC-SHA256 signing keys; tokens are **cryptographically signed, not encrypted**. Mutual exclusion checks prevent cross-realm access.
 
 2. **Automated Configuration Validation**:
    - `backend/config.py` runs `validate_config()` on application startup.
@@ -43,11 +43,11 @@ METECHQ implements defense-in-depth across the application lifecycle:
    - `Referrer-Policy: strict-origin-when-cross-origin`.
    - `Permissions-Policy: geolocation=(), camera=(), microphone=()`.
 
-7. **Cryptographic Tamper-Evident Audit Logging**:
+7. **Audit Log Integrity Checking**:
    - Implemented in `backend/utils/audit_logger.py`.
    - Records actor ID, username, action, resource, IP address, and status.
-   - Every mutation entry contains a SHA-256 hash incorporating the previous entry's hash, forming an append-only cryptographic block chain.
-   - Verified via `GET /api/admins/security-overview` and `/api/admins/audit-logs/verify`.
+   - Every mutation entry contains an unkeyed SHA-256 hash incorporating the previous entry's hash.
+   - **Boundary plainly noted:** Unkeyed hash-chaining with process-local append locking detects application-level mutations, omissions, and sequence disruptions. It does NOT prevent a database administrator with direct raw MongoDB write access from rewriting the chain, nor does a process-local lock guarantee concurrency across multiple worker processes without external synchronization.
 
 ---
 
@@ -93,15 +93,20 @@ openssl rand -hex 32
 Run the automated security runner to execute tests against an isolated ephemeral database:
 
 ```bash
-# Full isolated runner (54 pytest regression + 37 admin CRUD + 12 client management)
+# Full isolated runner (59 pytest regression + 37 admin CRUD + 12 client management = 108 total passed)
 python scripts/run_evaluation_tests.py
 
 # Frontend regression test suite (17 passed)
 cd frontend
-npm test -- --watchAll=false
+yarn test --watchAll=false --runInBand
 
 # Production compilation check
-npm run build
+yarn build
+
+# Dependency audits
+yarn audit --groups dependencies
+cd ..
+python -m pip_audit -r backend/requirements.txt
 ```
 
 ---
@@ -109,15 +114,14 @@ npm run build
 ## 5. Security Transparency Views
 
 1. **Public "Security & Privacy" Page (`/security`)**:
-   - Plain-language explanation of authentication realms, client project data isolation, file integrity controls, and responsible disclosure.
-   - Contains responsible vulnerability disclosure channel (`security@metechq.com`).
-   - Strictly reports verified mechanisms without marketing hype or false certification claims.
+   - Plain-language explanation of signed JWT authentication realms, client project data isolation, file integrity controls, and responsible disclosure intake.
+   - Reports verified mechanisms without marketing hype, database-proof claims, or false certification claims.
 
 2. **Admin-Only "Security Center" (`/admin/security`)**:
    - Accessible only by authorized administrators.
    - Backed by authenticated endpoint `GET /api/admins/security-overview`.
-   - Displays live status rows (`Verified`, `Needs attention`, `Not verified`) with linked code files and test evidence.
-   - Performs real-time cryptographic audit chain integrity checks.
+   - Displays live status rows (`Verified`, `Needs attention`, `Not verified`) with linked code files, evidence types, verification scopes, and test references.
+   - Performs real-time cryptographic audit chain integrity checks with complete vs truncated scan detection.
 
 ---
 
@@ -126,7 +130,7 @@ npm run build
 1. **Session Cookies Migration**:
    - Currently, tokens are stored in browser `localStorage`.
    - *Target architecture*: Migrate to `HttpOnly`, `Secure`, `SameSite=Strict` cookies issued by FastAPI backend on authentication, eliminating browser JavaScript access to session tokens.
-2. **Distributed Rate Limiting**:
-   - Configure a managed Redis instance (`REDIS_URL`) to unify sliding-window rate tracking across multiple backend replicas.
+2. **Distributed Rate Limiting & Concurrency**:
+   - Configure a managed Redis instance (`REDIS_URL`) to unify sliding-window rate tracking and distributed audit append locking across multiple backend replicas.
 3. **Frontend Build Toolchain Modernization**:
-   - Migrate from `react-scripts 5.0.1` (CRA) to Vite to modernize build-time development dependencies.
+   - Migrate from Create React App (`react-scripts 5.0.1`) to Vite to eliminate legacy build-time transitive dependencies (`webpack-dev-middleware`, `postcss v7/v8`, `svgo v1`).

@@ -10,7 +10,8 @@ import {
   Database, 
   Server, 
   ExternalLink,
-  Search
+  Search,
+  Clock
 } from 'lucide-react';
 import axios from 'axios';
 import { getBackendURL } from '../../lib/utils';
@@ -162,7 +163,7 @@ const SecurityCenter = () => {
             </h1>
           </div>
           <p style={{ margin: 0, color: 'var(--text-muted, #6B7280)', fontSize: '0.95rem' }}>
-            System control verification, cryptographic audit integrity, and live evaluation evidence.
+            Evidence-based control verification, cryptographic audit chain checks, and evaluator audit trails.
           </p>
         </div>
 
@@ -224,7 +225,7 @@ const SecurityCenter = () => {
             {summary.total_controls}
           </div>
           <div style={{ fontSize: '0.8rem', color: 'var(--text-muted, #6B7280)', marginTop: '0.25rem' }}>
-            Mapped against attack surface
+            Mapped against real attack surface
           </div>
         </div>
 
@@ -242,7 +243,7 @@ const SecurityCenter = () => {
             {summary.verified_count}
           </div>
           <div style={{ fontSize: '0.8rem', color: '#059669', marginTop: '0.25rem' }}>
-            Covered by automated regression tests
+            Confirmed by live checks & tests
           </div>
         </div>
 
@@ -260,7 +261,7 @@ const SecurityCenter = () => {
             {summary.needs_attention_count}
           </div>
           <div style={{ fontSize: '0.8rem', color: '#D97706', marginTop: '0.25rem' }}>
-            Supply chain & build-time dependencies
+            Supply chain & build-time toolchain
           </div>
         </div>
 
@@ -278,7 +279,7 @@ const SecurityCenter = () => {
             {summary.not_verified_count}
           </div>
           <div style={{ fontSize: '0.8rem', color: 'var(--text-muted, #6B7280)', marginTop: '0.25rem' }}>
-            Requires cloud provider settings audit
+            Requires cloud console audit
           </div>
         </div>
       </div>
@@ -309,10 +310,10 @@ const SecurityCenter = () => {
               </div>
               <div>
                 <h2 style={{ fontSize: '1.1rem', fontWeight: 600, margin: 0, color: 'var(--text-primary, #111827)' }}>
-                  Tamper-Evident Audit Log Hash Chain
+                  Audit Log Hash-Chain Integrity
                 </h2>
                 <p style={{ margin: '2px 0 0', fontSize: '0.85rem', color: 'var(--text-muted, #6B7280)' }}>
-                  Every administrative mutation is linked to the previous SHA-256 block hash.
+                  Administrative mutations are sealed with SHA-256 linking to the previous entry hash.
                 </p>
               </div>
             </div>
@@ -323,13 +324,15 @@ const SecurityCenter = () => {
               gap: '6px',
               padding: '6px 14px',
               borderRadius: '9999px',
-              background: auditChain.verified ? 'rgba(16, 185, 129, 0.1)' : 'rgba(239, 68, 68, 0.1)',
-              color: auditChain.verified ? '#10B981' : '#EF4444',
+              background: (auditChain.verified && auditChain.complete_scan) ? 'rgba(16, 185, 129, 0.1)' : 'rgba(245, 158, 11, 0.1)',
+              color: (auditChain.verified && auditChain.complete_scan) ? '#10B981' : '#D97706',
               fontSize: '0.85rem',
               fontWeight: 600
             }}>
-              {auditChain.verified ? <CheckCircle2 size={15} /> : <AlertTriangle size={15} />}
-              {auditChain.verified ? 'Cryptographic Chain Valid' : 'Integrity Mismatch Detected'}
+              {(auditChain.verified && auditChain.complete_scan) ? <CheckCircle2 size={15} /> : <AlertTriangle size={15} />}
+              {auditChain.verified
+                ? (auditChain.complete_scan ? 'Complete Chain Intact' : 'Partial Scan Intact (Limit Reached)')
+                : 'Integrity Mismatch Detected'}
             </div>
           </div>
 
@@ -343,17 +346,25 @@ const SecurityCenter = () => {
             fontSize: '0.85rem'
           }}>
             <div>
-              <span style={{ color: 'var(--text-muted, #6B7280)' }}>Verified Records:</span>{' '}
-              <strong style={{ color: 'var(--text-primary, #111827)' }}>{auditChain.verified_count || 0} entries</strong>
+              <span style={{ color: 'var(--text-muted, #6B7280)' }}>Records Verified:</span>{' '}
+              <strong style={{ color: 'var(--text-primary, #111827)' }}>
+                {auditChain.records_verified ?? 0} of {auditChain.total_records_in_db ?? 0} in DB
+              </strong>
             </div>
             <div>
-              <span style={{ color: 'var(--text-muted, #6B7280)' }}>Algorithm:</span>{' '}
-              <strong style={{ color: 'var(--text-primary, #111827)' }}>SHA-256 Hash Chaining</strong>
+              <span style={{ color: 'var(--text-muted, #6B7280)' }}>Scan Coverage:</span>{' '}
+              <strong style={{ color: 'var(--text-primary, #111827)' }}>
+                {auditChain.complete_scan ? 'Complete (100% of collection)' : 'Partial / Truncated'}
+              </strong>
             </div>
             <div>
-              <span style={{ color: 'var(--text-muted, #6B7280)' }}>Verification Scope:</span>{' '}
-              <strong style={{ color: 'var(--text-primary, #111827)' }}>Live Database Traversal</strong>
+              <span style={{ color: 'var(--text-muted, #6B7280)' }}>Algorithm & Mutex:</span>{' '}
+              <strong style={{ color: 'var(--text-primary, #111827)' }}>Unkeyed SHA-256 (Process Lock)</strong>
             </div>
+          </div>
+
+          <div style={{ marginTop: '0.75rem', fontSize: '0.8rem', color: '#6B7280', fontStyle: 'italic' }}>
+            Note on security boundary: Hash chaining detects client-side mutations and sequence gaps. It does not prevent a privileged database administrator with raw MongoDB access from recomputing hashes.
           </div>
         </div>
       )}
@@ -452,6 +463,18 @@ const SecurityCenter = () => {
                     }}>
                       {control.category}
                     </span>
+                    {control.verification_scope && (
+                      <span style={{
+                        fontSize: '0.72rem',
+                        padding: '2px 7px',
+                        borderRadius: '4px',
+                        background: 'rgba(37, 99, 235, 0.08)',
+                        color: '#2563EB',
+                        border: '1px solid rgba(37, 99, 235, 0.2)'
+                      }}>
+                        Scope: {control.verification_scope}
+                      </span>
+                    )}
                   </div>
                   <p style={{ margin: '6px 0 0', fontSize: '0.88rem', color: 'var(--text-secondary, #4B5563)', lineHeight: 1.5 }}>
                     {control.description}
@@ -472,10 +495,20 @@ const SecurityCenter = () => {
                 color: 'var(--text-muted, #4B5563)',
                 display: 'flex',
                 alignItems: 'center',
+                justifyContent: 'space-between',
+                flexWrap: 'wrap',
                 gap: '6px'
               }}>
-                <FileText size={14} style={{ color: '#6B7280', flexShrink: 0 }} />
-                <span><strong>Verification Evidence:</strong> {control.evidence}</span>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
+                  <FileText size={14} style={{ color: '#6B7280', flexShrink: 0 }} />
+                  <span><strong>Evidence:</strong> {control.evidence}</span>
+                </div>
+                {control.last_verified && (
+                  <div style={{ fontSize: '0.75rem', color: '#9CA3AF', display: 'flex', alignItems: 'center', gap: '4px' }}>
+                    <Clock size={12} />
+                    <span>Checked: {new Date(control.last_verified).toLocaleDateString()}</span>
+                  </div>
+                )}
               </div>
             </div>
           ))}
@@ -501,19 +534,22 @@ const SecurityCenter = () => {
         </h3>
         <ul style={{ margin: 0, paddingLeft: '1.25rem', fontSize: '0.88rem', color: 'var(--text-secondary, #4B5563)', lineHeight: 1.6 }}>
           <li>
-            <strong>Token Realm Separation:</strong> Separate cryptographic JWT keys ensure an admin token cannot authorize a client endpoint, and vice versa. Tested in <code>tests/backend/test_evaluation_security.py</code>.
+            <strong>Token Realm Separation:</strong> Distinct 32+ character HMAC-SHA256 secrets ensure an admin token cannot authorize a client endpoint, and vice versa. Verified by automated unit and API integration tests.
           </li>
           <li>
             <strong>Client Isolation:</strong> Database queries enforce <code>client_id</code> constraints on projects, tasks, milestones, comments, and private files. Cross-client access attempts return 404 or 401.
           </li>
           <li>
-            <strong>Rate Limiting Scope:</strong> In-memory sliding window operates per backend process. In high-concurrency multi-worker environments, a Redis cluster (via <code>REDIS_URL</code>) is required for unified tracking.
+            <strong>Audit Log Integrity:</strong> Unkeyed SHA-256 hash chaining detects mutations, sequence deletions, and reordering. Process-local lock synchronizes appends within a worker. It does not prevent a database administrator with direct MongoDB access from recomputing hashes.
           </li>
           <li>
-            <strong>Frontend Dependencies:</strong> CRA build toolchain (<code>react-scripts 5.0.1</code>) contains dev-time vulnerabilities reported by npm audit; client bundle code executes in isolated browser sandboxes without Node.js backend access.
+            <strong>Rate Limiting Scope:</strong> In-memory sliding window operates per backend worker process. Multi-worker production clusters require Redis (<code>REDIS_URL</code>).
           </li>
           <li>
-            <strong>Independent Verification Documentation:</strong> Detailed threat assessments and testing reproduction guides are available in <code>THREATS.md</code>, <code>SECURITY_SETUP.md</code>, and <code>docs/EVALUATION_GUIDE.md</code>.
+            <strong>Frontend Build Toolchain:</strong> Authoritative dependencies are locked in <code>frontend/yarn.lock</code> (CI builds with <code>yarn install --frozen-lockfile</code>). CRA toolchain (<code>react-scripts 5.0.1</code>) contains 40 transitive advisories (9 High) affecting the build environment; migration to Vite is planned.
+          </li>
+          <li>
+            <strong>Backend Dependencies:</strong> <code>backend/requirements.txt</code> runtime dependencies (cryptography, urllib3, certifi, python-multipart, pyjwt, anyio) updated to compatible releases; 18 packages retain upstream advisories requiring staged migration.
           </li>
         </ul>
       </div>

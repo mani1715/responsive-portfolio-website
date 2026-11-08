@@ -13,8 +13,25 @@ audit_collection = db["audit_logs"]
 GENESIS_HASH = "0000000000000000000000000000000000000000000000000000000000000000"
 SENSITIVE_KEYS = {"password", "password_hash", "token", "access_token", "secret", "authorization", "value"}
 
-# Process-level serialization lock for atomic sequence and chain append operations
+# Threat boundary specification:
+# Process-level serialization lock for atomic sequence and chain append operations.
+# Note on operational boundaries:
+# 1. Unkeyed SHA-256 hash chaining detects client-side log tampering, payload modifications,
+#    intermediate record deletions, and record reordering.
+# 2. It does NOT prevent a privileged database administrator with direct raw write access to MongoDB
+#    from recomputing the hash chain across records.
+# 3. The process-local asyncio.Lock serializes concurrent appends within a single process.
+#    In multi-worker production deployments, database transactions or distributed locking (e.g., Redis)
+#    are required to synchronize append sequences across worker instances.
 _append_lock = asyncio.Lock()
+
+AUDIT_SECURITY_BOUNDARY = (
+    "Unkeyed SHA-256 hash-chaining with process-local append serialization. "
+    "Detects client-side, application-level, and unauthorized payload modifications, omissions, "
+    "and out-of-order mutations. Does not prevent a privileged database administrator with direct "
+    "raw write access to MongoDB from rewriting the chain, nor does a process-local lock guarantee "
+    "concurrency across multiple worker processes without external distributed synchronization."
+)
 
 def sanitize_details(details: Optional[Dict[str, Any]]) -> Dict[str, Any]:
     """Recursively redacts sensitive keys from audit log details"""
@@ -86,7 +103,7 @@ async def record_audit_log(
 ) -> Optional[str]:
     """
     Persists a cryptographically sealed, tamper-evident audit log document.
-    Serializes concurrent appends via an async mutex to prevent sequence race conditions.
+    Serializes concurrent appends via an async mutex to prevent sequence race conditions within the process.
     Chains the entry to the preceding document via SHA-256 hash chaining.
     """
     async with _append_lock:
@@ -149,39 +166,81 @@ async def verify_audit_log_chain(limit: int = 1000) -> Dict[str, Any]:
     """
     Verifies cryptographic hash-chain integrity of audit log entries.
     Detects any modification, insertion, deletion, or reordering of records.
+    Never reports a partial/truncated audit scan as a complete verification.
     """
     try:
+        total_in_db = await audit_collection.count_documents({})
         cursor = audit_collection.find().sort("sequence", 1).limit(limit)
         entries = await cursor.to_list(length=limit)
 
-        if not entries:
+        if total_in_db == 0:
             return {
                 "verified": True,
                 "chain_intact": True,
-                "total_records": 0,
-                "message": "Audit log is empty (genesis state)."
+                "total_records_in_db": 0,
+                "records_verified": 0,
+                "is_truncated": False,
+                "complete_scan": True,
+                "legacy_records_skipped": 0,
+                "status": "empty",
+                "broken_at_index": None,
+                "broken_sequence": None,
+                "error": None,
+                "message": "Audit log is empty (genesis state).",
+                "limit_applied": limit,
+                "security_boundary": AUDIT_SECURITY_BOUNDARY
             }
 
         expected_prev_hash = GENESIS_HASH
         expected_sequence = 1
+        legacy_records_skipped = 0
+        records_verified = 0
 
         for idx, entry in enumerate(entries):
             seq = entry.get("sequence")
             prev_hash = entry.get("prev_hash")
             stored_hash = entry.get("entry_hash")
 
-            # Check for legacy unchained entries
-            if not seq or not stored_hash:
-                continue
+            # Check for legacy unchained entries before sequence begins
+            if seq is None or stored_hash is None:
+                if expected_sequence == 1:
+                    legacy_records_skipped += 1
+                    continue
+                else:
+                    return {
+                        "verified": False,
+                        "chain_intact": False,
+                        "total_records_in_db": total_in_db,
+                        "records_verified": records_verified,
+                        "is_truncated": total_in_db > len(entries),
+                        "complete_scan": False,
+                        "legacy_records_skipped": legacy_records_skipped,
+                        "status": "tampered",
+                        "broken_at_index": idx,
+                        "broken_sequence": None,
+                        "error": f"Unchained legacy entry encountered at index {idx} after sequence {expected_sequence - 1}.",
+                        "message": f"Integrity failure: unchained record found at index {idx}.",
+                        "limit_applied": limit,
+                        "security_boundary": AUDIT_SECURITY_BOUNDARY
+                    }
 
             # Verify sequence continuity (detects deletions and insertions)
             if seq != expected_sequence:
                 return {
                     "verified": False,
                     "chain_intact": False,
+                    "total_records_in_db": total_in_db,
+                    "records_verified": records_verified,
+                    "is_truncated": total_in_db > len(entries),
+                    "complete_scan": False,
+                    "legacy_records_skipped": legacy_records_skipped,
+                    "status": "sequence_gap",
                     "broken_at_index": idx,
                     "broken_sequence": seq,
-                    "error": f"Sequence gap detected! Expected {expected_sequence}, found {seq}. Indicates record deletion or insertion."
+                    "error": f"Sequence gap detected! Expected {expected_sequence}, found {seq}. Indicates record deletion or insertion.",
+                    "message": f"Sequence gap detected at record {idx} (expected sequence {expected_sequence}, found {seq}).",
+                    "limit_applied": limit,
+                    "security_boundary": AUDIT_SECURITY_BOUNDARY
                 }
 
             # Verify link to previous entry (detects reordering)
@@ -189,9 +248,18 @@ async def verify_audit_log_chain(limit: int = 1000) -> Dict[str, Any]:
                 return {
                     "verified": False,
                     "chain_intact": False,
+                    "total_records_in_db": total_in_db,
+                    "records_verified": records_verified,
+                    "is_truncated": total_in_db > len(entries),
+                    "complete_scan": False,
+                    "legacy_records_skipped": legacy_records_skipped,
+                    "status": "broken_link",
                     "broken_at_index": idx,
                     "broken_sequence": seq,
-                    "error": f"Chain link broken at sequence {seq}. Previous hash mismatch."
+                    "error": f"Chain link broken at sequence {seq}. Previous hash mismatch.",
+                    "message": f"Chain link broken at sequence {seq}.",
+                    "limit_applied": limit,
+                    "security_boundary": AUDIT_SECURITY_BOUNDARY
                 }
 
             # Verify entry content has not been tampered with
@@ -227,24 +295,94 @@ async def verify_audit_log_chain(limit: int = 1000) -> Dict[str, Any]:
                     return {
                         "verified": False,
                         "chain_intact": False,
+                        "total_records_in_db": total_in_db,
+                        "records_verified": records_verified,
+                        "is_truncated": total_in_db > len(entries),
+                        "complete_scan": False,
+                        "legacy_records_skipped": legacy_records_skipped,
+                        "status": "tampered",
                         "broken_at_index": idx,
                         "broken_sequence": seq,
-                        "error": f"Tampering detected! Recomputed hash does not match stored hash at sequence {seq}."
+                        "error": f"Tampering detected! Recomputed hash does not match stored hash at sequence {seq}.",
+                        "message": f"Tampering detected at sequence {seq}.",
+                        "limit_applied": limit,
+                        "security_boundary": AUDIT_SECURITY_BOUNDARY
                     }
 
             expected_prev_hash = stored_hash
             expected_sequence += 1
+            records_verified += 1
+
+        if records_verified == 0 and legacy_records_skipped > 0:
+            return {
+                "verified": False,
+                "chain_intact": False,
+                "total_records_in_db": total_in_db,
+                "records_verified": 0,
+                "is_truncated": total_in_db > len(entries),
+                "complete_scan": total_in_db <= len(entries),
+                "legacy_records_skipped": legacy_records_skipped,
+                "status": "legacy_unchained",
+                "broken_at_index": None,
+                "broken_sequence": None,
+                "error": "Audit log contains only unchained legacy records without cryptographic hashes.",
+                "message": f"No sequenced records found. {legacy_records_skipped} legacy records skipped.",
+                "limit_applied": limit,
+                "security_boundary": AUDIT_SECURITY_BOUNDARY
+            }
+
+        is_truncated = total_in_db > len(entries)
+        complete_scan = not is_truncated
+
+        if is_truncated:
+            return {
+                "verified": True,
+                "chain_intact": True,
+                "total_records_in_db": total_in_db,
+                "records_verified": records_verified,
+                "is_truncated": True,
+                "complete_scan": False,
+                "legacy_records_skipped": legacy_records_skipped,
+                "status": "partial_verified",
+                "broken_at_index": None,
+                "broken_sequence": None,
+                "error": None,
+                "message": f"Partial audit scan: verified {records_verified} of {total_in_db} records. Verification limit ({limit}) reached; scan is incomplete.",
+                "limit_applied": limit,
+                "security_boundary": AUDIT_SECURITY_BOUNDARY
+            }
 
         return {
             "verified": True,
             "chain_intact": True,
-            "total_records": len(entries),
-            "message": f"Cryptographic audit chain fully verified ({len(entries)} records intact)."
+            "total_records_in_db": total_in_db,
+            "records_verified": records_verified,
+            "is_truncated": False,
+            "complete_scan": True,
+            "legacy_records_skipped": legacy_records_skipped,
+            "status": "verified",
+            "broken_at_index": None,
+            "broken_sequence": None,
+            "error": None,
+            "message": f"Cryptographic audit chain fully verified ({records_verified} records intact).",
+            "limit_applied": limit,
+            "security_boundary": AUDIT_SECURITY_BOUNDARY
         }
     except Exception as e:
         logger.error(f"Audit log verification failed: {e}")
         return {
             "verified": False,
             "chain_intact": False,
-            "error": str(e)
+            "total_records_in_db": 0,
+            "records_verified": 0,
+            "is_truncated": False,
+            "complete_scan": False,
+            "legacy_records_skipped": 0,
+            "status": "error",
+            "broken_at_index": None,
+            "broken_sequence": None,
+            "error": str(e),
+            "message": f"Audit log verification encountered internal error: {str(e)}",
+            "limit_applied": limit,
+            "security_boundary": AUDIT_SECURITY_BOUNDARY
         }

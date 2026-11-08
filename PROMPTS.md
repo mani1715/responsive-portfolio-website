@@ -2147,3 +2147,41 @@ B. Admin-only "Security Center"
 PHASE 4 — DOCUMENTATION AND FINAL REPORT
 Update README and the relevant security/evaluation documentation.
 ```
+
+### C44 - Security verification gap remediation, audit-chain schema integration, lockfile alignment, and evidence-based reporting
+
+```text
+Review the current METECHQ security work in commit 151fbb7 and fix the verification gaps below. Inspect the implementation; do not only change the documentation.
+
+1. Fix the audit-chain status integration:
+   - Compare the actual return schema of verify_audit_log_chain() with the fields read by GET /api/admins/security-overview.
+   - Use consistent, typed fields and add tests for both an intact chain and a tampered chain.
+   - Test empty logs, legacy entries, sequence gaps, and logs exceeding the verification limit.
+   - Never report a partial/truncated audit scan as a complete verification.
+   - Ensure the Security Center displays the real result and accurate number of records checked.
+
+2. Correct audit-log security claims:
+   - The current chain uses unkeyed SHA-256 and a process-local lock. Do not claim it prevents a database administrator from rewriting the chain or guarantees safe concurrent appends across multiple workers.
+   - Either accurately label it as a hash-chain integrity check with those limitations, or design a stronger keyed/external-anchor approach only if the key can be stored separately from MongoDB and safely configured in production.
+   - Add tests for the chosen behavior and document the threat boundary plainly.
+
+3. Align dependency auditing with the actual build:
+   - CI currently installs dependencies with Yarn from frontend/yarn.lock, while a package-lock.json was added.
+   - Choose one authoritative frontend lockfile, make CI and deployment use it consistently, and run the audit against that exact dependency graph.
+   - Do not dismiss build-toolchain vulnerabilities solely because they are absent from the browser bundle. Explain exposure to the build/CI environment and remediate or document each remaining finding with package path, severity, reachability, and next action.
+   - Rerun pip-audit for the backend. Prioritize runtime dependencies; upgrade compatible related packages together, run the test suite after each group, and leave unresolved findings explicitly listed. Do not claim dependency security is complete while high-risk runtime advisories remain.
+
+4. Make Security Center statuses evidence-based:
+   - Distinguish source/test evidence from live production verification.
+   - Do not hardcode a control as "Verified" if it has not been checked or if its verification result is stale.
+   - Show the verification date and scope. Mark hosted settings "Not verified" unless actually checked against the deployed services.
+   - Keep this endpoint authenticated and avoid exposing secrets or private customer data.
+
+5. Correct public Security & Privacy wording:
+   - Say JWTs are signed, not encrypted.
+   - Add an actual last-reviewed date.
+   - Confirm the vulnerability-reporting email is operational; if it is not, do not publish it as a working contact.
+   - Do not claim certification, complete protection, or database-proof tamper resistance.
+
+6. Run and record the relevant backend tests, frontend tests, production build, and dependency audits. Update the threat model, evaluation guide, verification report, and README so they match the code and actual results. Do not deploy or change production data/secrets.
+```

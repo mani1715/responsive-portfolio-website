@@ -167,3 +167,146 @@ def test_admin_security_overview_requires_authentication(api_context):
     assert any(c['id'] == 'frontend_deps' and c['status'] == 'Needs attention' for c in data['controls'])
     assert any(c['id'] == 'hosted_verification' and c['status'] == 'Not verified' for c in data['controls'])
 
+# ==============================================================================
+# AUDIT CHAIN INTEGRITY & BOUNDARY TESTS
+# ==============================================================================
+
+class _MockCursor:
+    def __init__(self, data):
+        self._data = list(data)
+    def sort(self, key, direction):
+        self._data.sort(key=lambda d: (d.get(key) is not None, d.get(key, 0)), reverse=(direction == -1))
+        return self
+    def limit(self, n):
+        self._data = self._data[:n]
+        return self
+    async def to_list(self, length=None):
+        return self._data[:length] if length is not None else self._data
+
+class _MockAuditCollection:
+    def __init__(self, docs=None):
+        self.docs = list(docs or [])
+    async def count_documents(self, query):
+        return len(self.docs)
+    def find(self, query=None):
+        return _MockCursor(self.docs)
+
+@pytest.mark.asyncio
+async def test_audit_chain_empty_log(monkeypatch):
+    from utils.audit_logger import verify_audit_log_chain
+    import utils.audit_logger as al
+
+    mock_coll = _MockAuditCollection([])
+    monkeypatch.setattr(al, "audit_collection", mock_coll)
+
+    res = await verify_audit_log_chain(limit=10)
+    assert res["verified"] is True
+    assert res["chain_intact"] is True
+    assert res["status"] == "empty"
+    assert res["total_records_in_db"] == 0
+    assert res["records_verified"] == 0
+    assert res["complete_scan"] is True
+    assert res["is_truncated"] is False
+    assert "security_boundary" in res
+
+@pytest.mark.asyncio
+async def test_audit_chain_intact_and_tampered(monkeypatch):
+    from utils.audit_logger import compute_entry_hash, verify_audit_log_chain, GENESIS_HASH
+    import utils.audit_logger as al
+
+    h1 = compute_entry_hash(1, "2026-11-08T10:00:00", "admin1", "Admin", "admin", "login", "auth", "", "127.0.0.1", "success", GENESIS_HASH, {})
+    e1 = {"sequence": 1, "timestamp": "2026-11-08T10:00:00", "actor_id": "admin1", "actor_name": "Admin", "actor_role": "admin", "action": "login", "resource_type": "auth", "resource_id": "", "ip_address": "127.0.0.1", "status": "success", "prev_hash": GENESIS_HASH, "entry_hash": h1, "details": {}}
+    h2 = compute_entry_hash(2, "2026-11-08T10:01:00", "admin1", "Admin", "admin", "update", "setting", "1", "127.0.0.1", "success", h1, {"k": "v"})
+    e2 = {"sequence": 2, "timestamp": "2026-11-08T10:01:00", "actor_id": "admin1", "actor_name": "Admin", "actor_role": "admin", "action": "update", "resource_type": "setting", "resource_id": "1", "ip_address": "127.0.0.1", "status": "success", "prev_hash": h1, "entry_hash": h2, "details": {"k": "v"}}
+
+    # Intact chain
+    mock_coll = _MockAuditCollection([e1, e2])
+    monkeypatch.setattr(al, "audit_collection", mock_coll)
+    res = await verify_audit_log_chain(limit=10)
+    assert res["verified"] is True
+    assert res["status"] == "verified"
+    assert res["records_verified"] == 2
+    assert res["total_records_in_db"] == 2
+    assert res["complete_scan"] is True
+
+    # Tampered chain (modified details in sequence 2)
+    e2_tampered = dict(e2)
+    e2_tampered["details"] = {"k": "tampered_value"}
+    mock_coll_tampered = _MockAuditCollection([e1, e2_tampered])
+    monkeypatch.setattr(al, "audit_collection", mock_coll_tampered)
+    res_tampered = await verify_audit_log_chain(limit=10)
+    assert res_tampered["verified"] is False
+    assert res_tampered["status"] == "tampered"
+    assert res_tampered["broken_sequence"] == 2
+    assert "Tampering detected" in res_tampered["error"]
+
+@pytest.mark.asyncio
+async def test_audit_chain_sequence_gap(monkeypatch):
+    from utils.audit_logger import compute_entry_hash, verify_audit_log_chain, GENESIS_HASH
+    import utils.audit_logger as al
+
+    h1 = compute_entry_hash(1, "2026-11-08T10:00:00", "admin1", "Admin", "admin", "login", "auth", "", "127.0.0.1", "success", GENESIS_HASH, {})
+    e1 = {"sequence": 1, "timestamp": "2026-11-08T10:00:00", "actor_id": "admin1", "actor_name": "Admin", "actor_role": "admin", "action": "login", "resource_type": "auth", "resource_id": "", "ip_address": "127.0.0.1", "status": "success", "prev_hash": GENESIS_HASH, "entry_hash": h1, "details": {}}
+    h2 = compute_entry_hash(2, "2026-11-08T10:01:00", "admin1", "Admin", "admin", "update", "setting", "1", "127.0.0.1", "success", h1, {})
+    h3 = compute_entry_hash(3, "2026-11-08T10:02:00", "admin1", "Admin", "admin", "logout", "auth", "", "127.0.0.1", "success", h2, {})
+    e3 = {"sequence": 3, "timestamp": "2026-11-08T10:02:00", "actor_id": "admin1", "actor_name": "Admin", "actor_role": "admin", "action": "logout", "resource_type": "auth", "resource_id": "", "ip_address": "127.0.0.1", "status": "success", "prev_hash": h2, "entry_hash": h3, "details": {}}
+
+    # Sequence 2 omitted -> sequence gap
+    mock_coll = _MockAuditCollection([e1, e3])
+    monkeypatch.setattr(al, "audit_collection", mock_coll)
+    res = await verify_audit_log_chain(limit=10)
+    assert res["verified"] is False
+    assert res["status"] == "sequence_gap"
+    assert res["broken_sequence"] == 3
+    assert "Sequence gap detected" in res["error"]
+
+@pytest.mark.asyncio
+async def test_audit_chain_exceeds_limit_never_reports_complete(monkeypatch):
+    from utils.audit_logger import compute_entry_hash, verify_audit_log_chain, GENESIS_HASH
+    import utils.audit_logger as al
+
+    docs = []
+    prev = GENESIS_HASH
+    for i in range(1, 6):
+        h = compute_entry_hash(i, f"2026-11-08T10:0{i}:00", "admin1", "Admin", "admin", "action", "auth", "", "127.0.0.1", "success", prev, {})
+        docs.append({"sequence": i, "timestamp": f"2026-11-08T10:0{i}:00", "actor_id": "admin1", "actor_name": "Admin", "actor_role": "admin", "action": "action", "resource_type": "auth", "resource_id": "", "ip_address": "127.0.0.1", "status": "success", "prev_hash": prev, "entry_hash": h, "details": {}})
+        prev = h
+
+    mock_coll = _MockAuditCollection(docs)
+    monkeypatch.setattr(al, "audit_collection", mock_coll)
+
+    # Calling with limit=3 when 5 records exist
+    res = await verify_audit_log_chain(limit=3)
+    assert res["verified"] is True
+    assert res["is_truncated"] is True
+    assert res["complete_scan"] is False
+    assert res["status"] == "partial_verified"
+    assert res["records_verified"] == 3
+    assert res["total_records_in_db"] == 5
+    assert "Partial audit scan" in res["message"]
+
+@pytest.mark.asyncio
+async def test_audit_chain_legacy_entries_and_midchain_detection(monkeypatch):
+    from utils.audit_logger import compute_entry_hash, verify_audit_log_chain, GENESIS_HASH
+    import utils.audit_logger as al
+
+    legacy = {"timestamp": "2026-11-07T00:00:00", "action": "legacy_seed"}
+    h1 = compute_entry_hash(1, "2026-11-08T10:00:00", "admin1", "Admin", "admin", "login", "auth", "", "127.0.0.1", "success", GENESIS_HASH, {})
+    e1 = {"sequence": 1, "timestamp": "2026-11-08T10:00:00", "actor_id": "admin1", "actor_name": "Admin", "actor_role": "admin", "action": "login", "resource_type": "auth", "resource_id": "", "ip_address": "127.0.0.1", "status": "success", "prev_hash": GENESIS_HASH, "entry_hash": h1, "details": {}}
+
+    # Pre-sequence legacy entry should be skipped
+    mock_coll = _MockAuditCollection([legacy, e1])
+    monkeypatch.setattr(al, "audit_collection", mock_coll)
+    res = await verify_audit_log_chain(limit=10)
+    assert res["verified"] is True
+    assert res["legacy_records_skipped"] == 1
+    assert res["records_verified"] == 1
+
+    # Unchained record inserted AFTER sequence 1 started -> detected as tampering
+    unchained_mid = {"sequence": 2, "timestamp": "2026-11-08T10:05:00", "action": "untracked_insertion"}
+    mock_coll_mid = _MockAuditCollection([e1, unchained_mid])
+    monkeypatch.setattr(al, "audit_collection", mock_coll_mid)
+    res_mid = await verify_audit_log_chain(limit=10)
+    assert res_mid["verified"] is False
+    assert res_mid["status"] == "tampered"
+    assert "Unchained legacy entry" in res_mid["error"]
