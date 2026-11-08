@@ -11,7 +11,7 @@ METECHQ implements defense-in-depth across the application lifecycle:
 1. **Dual Secret Domain Isolation**:
    - `JWT_SECRET`: Admin dashboard authentication.
    - `CLIENT_JWT_SECRET`: Independent client portal authentication.
-   - Even if one secret realm is rotated or invalidated, the other realm remains securely isolated.
+   - Even if one secret realm is rotated or invalidated, the other realm remains securely isolated. Mutual exclusion checks prevent cross-realm access.
 
 2. **Automated Configuration Validation**:
    - `backend/config.py` runs `validate_config()` on application startup.
@@ -19,14 +19,14 @@ METECHQ implements defense-in-depth across the application lifecycle:
    - Minimum secret length is enforced (>= 32 characters).
 
 3. **Strict RBAC & Resource Ownership (Zero IDOR)**:
-   - All administrative routes (`/admin/*`, `/projects`, `/services`, `/contacts/admin/*`, `/pages`, `/content`, `/settings`) require authenticated admin tokens with valid claims.
+   - All administrative routes (`/admin/*`, `/projects`, `/services`, `/contacts/admin/*`, `/pages`, `/content`, `/settings`, `/admins`) require authenticated admin tokens with valid claims.
    - Client portal endpoints enforce tenant isolation: clients can only query and mutate projects, documents, and tasks assigned to their specific `client_id`.
-   - Super-admin authorization (`require_super_admin`) is strictly required for admin user provisioning (`/api/auth/register`) and viewing audit logs.
+   - Super-admin authorization (`require_super_admin`) is strictly required for admin user provisioning, audit log retrieval, and chain integrity verification.
 
 4. **Sliding-Window Rate Limiting**:
    - Implemented via `backend/utils/rate_limiter.py`.
    - Admin and client login endpoints enforce strict brute-force limits (5 failed attempts per 5-minute sliding window per client IP).
-   - AI conversation endpoints are protected from denial-of-wallet / resource exhaustion attacks.
+   - Rate limiting operates in-memory per worker process; production multi-worker deployment requires `REDIS_URL`.
 
 5. **Multi-Layer File & Upload Security**:
    - Implemented via `backend/utils/file_security.py`.
@@ -35,7 +35,7 @@ METECHQ implements defense-in-depth across the application lifecycle:
    - Active content scanning: SVG files are checked for embedded `<script>`, `javascript:`, and malicious event attributes (`onload=`).
    - Strict size limiting: 15MB file ceiling.
    - Path traversal prevention: UUID-prefixed randomized filenames; sanitized disk paths.
-   - Authenticated private downloads: files are served via `/api/storage/files/{filename}` requiring active authentication.
+   - Authenticated private downloads: files are served via `/api/client/projects/{id}/files/{file_id}/download` requiring active ownership token.
 
 6. **Defense-in-Depth HTTP Headers**:
    - `X-Content-Type-Options: nosniff` (MIME sniffing disabled).
@@ -43,11 +43,11 @@ METECHQ implements defense-in-depth across the application lifecycle:
    - `Referrer-Policy: strict-origin-when-cross-origin`.
    - `Permissions-Policy: geolocation=(), camera=(), microphone=()`.
 
-7. **Tamper-Evident Audit Logging**:
+7. **Cryptographic Tamper-Evident Audit Logging**:
    - Implemented in `backend/utils/audit_logger.py`.
    - Records actor ID, username, action, resource, IP address, and status.
-   - Automatically sanitizes and removes credentials, passwords, and tokens before logging.
-   - Stored in append-only MongoDB `audit_logs` collection with query indexes.
+   - Every mutation entry contains a SHA-256 hash incorporating the previous entry's hash, forming an append-only cryptographic block chain.
+   - Verified via `GET /api/admins/security-overview` and `/api/admins/audit-logs/verify`.
 
 ---
 
@@ -90,15 +90,43 @@ openssl rand -hex 32
 
 ## 4. Verification & Security Testing
 
-Run the automated security test suite to verify authorization, headers, rate limits, and upload defenses:
+Run the automated security runner to execute tests against an isolated ephemeral database:
 
 ```bash
-# Run backend security test suite
-python -m pytest tests/backend/test_comprehensive_security.py -v
+# Full isolated runner (54 pytest regression + 37 admin CRUD + 12 client management)
+python scripts/run_evaluation_tests.py
 
-# Run full backend API functional tests
-python tests/backend/backend_test.py
+# Frontend regression test suite (17 passed)
+cd frontend
+npm test -- --watchAll=false
 
-# Run client portal isolation tests
-python tests/backend/client_management_test.py
+# Production compilation check
+npm run build
 ```
+
+---
+
+## 5. Security Transparency Views
+
+1. **Public "Security & Privacy" Page (`/security`)**:
+   - Plain-language explanation of authentication realms, client project data isolation, file integrity controls, and responsible disclosure.
+   - Contains responsible vulnerability disclosure channel (`security@metechq.com`).
+   - Strictly reports verified mechanisms without marketing hype or false certification claims.
+
+2. **Admin-Only "Security Center" (`/admin/security`)**:
+   - Accessible only by authorized administrators.
+   - Backed by authenticated endpoint `GET /api/admins/security-overview`.
+   - Displays live status rows (`Verified`, `Needs attention`, `Not verified`) with linked code files and test evidence.
+   - Performs real-time cryptographic audit chain integrity checks.
+
+---
+
+## 6. Staged Hardening Roadmap
+
+1. **Session Cookies Migration**:
+   - Currently, tokens are stored in browser `localStorage`.
+   - *Target architecture*: Migrate to `HttpOnly`, `Secure`, `SameSite=Strict` cookies issued by FastAPI backend on authentication, eliminating browser JavaScript access to session tokens.
+2. **Distributed Rate Limiting**:
+   - Configure a managed Redis instance (`REDIS_URL`) to unify sliding-window rate tracking across multiple backend replicas.
+3. **Frontend Build Toolchain Modernization**:
+   - Migrate from `react-scripts 5.0.1` (CRA) to Vite to modernize build-time development dependencies.

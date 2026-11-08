@@ -2087,3 +2087,63 @@ and also when ever our work opens then there is aishu foods right for thet keep 
 Photography & Creative Portfolio keep these portifolio as the second one in first page 
 and also second screenshot keep that to Photography & Creative Portfolio
 ```
+
+### C43 - Comprehensive evidence-based security review, remediation, and evaluator security center views
+
+```text
+When ever i try to open these live demo in the portifolio it was not at all opening   Restaurant Booking Platform
+
+Work on the existing METECHQ repository. You already have the project context; first inspect the current code and confirm the repository state before making changes.
+
+GOAL
+Complete a careful, evidence-based security review and remediation of METECHQ, then add a clear way for an evaluator to see the security work. METECHQ is a React frontend with a FastAPI backend, MongoDB, separate admin and client portals, JWT authentication, client project/file sharing, uploads, and existing security and evaluation documentation.
+
+Do not just write a security plan. Inspect the actual implementation, fix verified issues, add regression tests, update documentation, and report what remains. Do not claim a control exists unless you can point to its implementation and verification.
+
+PHASE 1 — MAP AND REVIEW THE REAL ATTACK SURFACE
+1. Inspect the full repository, including all FastAPI routers, authentication and authorization helpers, database models, file storage/download paths, frontend API services, route guards, deployment configuration, CI, and existing tests.
+2. Build an endpoint inventory and classify each endpoint as public, admin-only, client-only, or service/internal. For every protected endpoint, verify authorization on the backend; hiding a frontend link does not count.
+3. Review at minimum:
+   - Admin/client JWT separation, token type/issuer/audience/expiry validation, account status, password hashing, bootstrap flow, and credential handling.
+   - Role and permission checks on every admin write and sensitive read.
+   - Client tenant isolation on every project, task, milestone, comment, chat, upload, and download operation. Test access using two different clients.
+   - Input validation, MongoDB query construction, mass assignment, error responses, and sensitive logging.
+   - Stored/reflected XSS, HTML sanitization, unsafe URL schemes, open redirects, and CORS.
+   - Upload type/signature/size validation, filename handling, path traversal, private storage, download authorization, and persistence assumptions.
+   - Brute-force/rate limits, payload size limits, and abuse of expensive endpoints.
+   - Security headers and CSP on both frontend and API, proxy-header trust, HTTPS behavior, and production configuration validation.
+   - Frontend token storage and session handling. Recommend and implement the safest practical design compatible with the current hosting architecture. If changing to secure HttpOnly cookies would require a larger migration, document the concrete risks and a staged migration instead of making a partial, unsafe change.
+   - Direct and transitive dependencies in both frontend and backend.
+
+PHASE 2 — FIX AND VERIFY
+1. Prioritize exploitable authorization, authentication, data exposure, upload, injection/XSS, secret handling, and production configuration issues.
+2. Fix every confirmed high-risk issue that can be safely fixed without destructive database changes. Add a regression test for each security fix.
+3. Do not perform broad dependency upgrades blindly. Rerun current frontend and Python audits, identify the package paths and practical fixes, update lockfiles, and rerun build/tests. If a finding cannot be fixed safely, explain why, its impact, and a concrete next step.
+4. Make CORS restrictive to configured production origins. Ensure production secrets are distinct, sufficiently strong, and never returned to clients or logs.
+5. Ensure private client files stay private and persistent in the intended production setup. Do not claim durable or encrypted storage unless the deployed storage configuration proves it.
+6. Add or strengthen CI checks so security regression tests and production build run on changes. Do not make the workflow report success when a security command failed or was skipped.
+7. Run the relevant backend tests, frontend tests, production build, and dependency audits. Record the actual commands and outcomes. Do not copy old results forward.
+
+PHASE 3 — SHOW SECURITY HONESTLY IN THE PRODUCT
+Add two complementary views, following METECHQ's existing design and routing conventions:
+
+A. Public "Security & Privacy" page
+- Add a clear "Security" or "Security & Privacy" link in the public site footer.
+- Explain, in plain language, how admin and client access are separated, how a client is restricted to their own assigned projects, how file access is controlled, and how visitors can report a security concern.
+- Only describe controls verified in code and tests.
+- Include a "Last reviewed" date and an explicit scope/limitations note. Do not publish secrets, internal host details, exploitable configuration, or sensitive test data.
+- Do not add fake certifications, compliance badges, encryption claims, uptime claims, or a "100% secure" score.
+- Keep the page accessible, responsive, and consistent with the current design.
+
+B. Admin-only "Security Center"
+- Add a Security Center reachable only by an appropriately authorized administrator (prefer super-admin if the current permission model supports it).
+- Show a small, understandable set of status rows such as authentication separation, authorization regression tests, upload controls, security headers/configuration, and dependency audit.
+- Derive each status from a real check or a current recorded verification result. Use "Verified," "Needs attention," or "Not verified"; never display green success merely because a setting exists or a test was written.
+- Do not show secret values, raw tokens, private customer data, sensitive filesystem paths, or actionable exploit details.
+- If a check cannot be performed in the deployed environment, say "Not verified" and explain the safe next step.
+- Protect any API endpoint feeding this page with server-side authorization. Do not expose administrative security status through a public endpoint.
+- Make the page useful for an evaluator: show what was checked, when, evidence/report links, and known limitations without turning it into a marketing claim.
+
+PHASE 4 — DOCUMENTATION AND FINAL REPORT
+Update README and the relevant security/evaluation documentation.
+```

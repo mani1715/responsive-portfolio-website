@@ -145,3 +145,25 @@ def test_restricted_admin_cannot_manage_clients_or_portfolio(api_context):
 def test_public_admin_bootstrap_disabled(api_context):
     base,_,_,_=api_context
     assert requests.post(base+'/admins/init',timeout=15).status_code == 410
+
+def test_admin_security_overview_requires_authentication(api_context):
+    base,admin,clients,_ = api_context
+    # 1. Unauthenticated request must be rejected with 401
+    assert requests.get(base+'/admins/security-overview', timeout=15).status_code == 401
+    
+    # 2. Client token must be rejected with 401/403 (realm separation)
+    client_auth = clients[0][1]
+    assert requests.get(base+'/admins/security-overview', headers=client_auth, timeout=15).status_code in [401, 403]
+    
+    # 3. Super admin token must succeed and return verified status
+    response = requests.get(base+'/admins/security-overview', headers=admin, timeout=15)
+    assert response.status_code == 200, response.text
+    data = response.json()
+    assert data['status'] == 'active'
+    assert 'controls' in data
+    assert any(c['id'] == 'auth_separation' and c['status'] == 'Verified' for c in data['controls'])
+    assert any(c['id'] == 'tenant_isolation' and c['status'] == 'Verified' for c in data['controls'])
+    assert any(c['id'] == 'file_integrity' and c['status'] == 'Verified' for c in data['controls'])
+    assert any(c['id'] == 'frontend_deps' and c['status'] == 'Needs attention' for c in data['controls'])
+    assert any(c['id'] == 'hosted_verification' and c['status'] == 'Not verified' for c in data['controls'])
+

@@ -3,7 +3,7 @@
 > - ⚡ **Live API Backend (Render)**: [https://metechq.onrender.com](https://metechq.onrender.com)
 > - 📚 **Interactive Swagger Docs**: [https://metechq.onrender.com/docs](https://metechq.onrender.com/docs)
 >
-> **Project Evidence Documents**: [Evaluation Guide](docs/EVALUATION_GUIDE.md) | [Threat Model & Security](THREATS.md) | [Prompt History](PROMPTS.md) | [Portfolio & Client Guide](docs/PORTFOLIO_AND_CLIENT_GUIDE.md)
+> **Project Evidence Documents**: [Evaluation Guide](docs/EVALUATION_GUIDE.md) | [Threat Model & Security](THREATS.md) | [Security Architecture](SECURITY_SETUP.md) | [Prompt History](PROMPTS.md) | [Portfolio & Client Guide](docs/PORTFOLIO_AND_CLIENT_GUIDE.md)
 
 # 🚀 METECHQ – Portfolio & Client Management Platform
 
@@ -50,6 +50,18 @@ Admins can:
 * Upload and manage files
 
 This makes the platform suitable for **freelancers, agencies, and service-based businesses**.
+
+---
+
+## 4️⃣ Public Security & Privacy Page (`/security`)
+
+A public-facing security transparency page explaining authentication realm separation, tenant project isolation, file security, and responsible disclosure contact (`security@metechq.com`).
+
+---
+
+## 5️⃣ Admin Security Center (`/admin/security`)
+
+A restricted management portal view backed by authenticated endpoint `GET /api/admins/security-overview`. It presents verified status rows (`Verified`, `Needs attention`, `Not verified`), real-time cryptographic audit trail hash-chain verification (`verify_audit_log_chain`), and links to code/test evidence.
 
 ---
 
@@ -295,15 +307,21 @@ build
 
 ---
 
-# 🧪 Testing
+# 🧪 Testing & Verification
 
-Backend tests:
+Comprehensive automated test runner executes tests against an isolated ephemeral MongoDB database:
 
-pytest
+```bash
+# 1. Full isolated backend test runner (103 passed: 54 pytest + 37 admin CRUD + 12 client isolation)
+python scripts/run_evaluation_tests.py
 
-Frontend tests:
+# 2. Frontend regression test suite (17 passed)
+cd frontend
+npm test -- --watchAll=false
 
-yarn test
+# 3. Frontend production build compilation check
+npm run build
+```
 
 ---
 

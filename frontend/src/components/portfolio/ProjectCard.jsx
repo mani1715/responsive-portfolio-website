@@ -44,14 +44,12 @@ const ProjectCard = ({ project, onQuickView }) => {
         {/* Hover Overlay */}
         <div className="project-card-overlay">
           <div className="project-overlay-buttons">
-            <Link to={`/portfolio/${slug || id}`}>
-              <Button className="project-overlay-btn btn-view">
-                <span>View Case Study</span>
-              </Button>
+            <Link to={`/portfolio/${slug || id}`} className="project-overlay-btn btn-view" style={{ textDecoration: 'none' }}>
+              <span>View Case Study</span>
             </Link>
 
             {onQuickView && (
-              <Button
+              <button
                 type="button"
                 onClick={(e) => {
                   e.preventDefault();
@@ -62,16 +60,21 @@ const ProjectCard = ({ project, onQuickView }) => {
               >
                 <Eye className="h-4 w-4 mr-1" />
                 <span>Quick View</span>
-              </Button>
+              </button>
             )}
 
             {liveDemoUrl && (
-              <a href={liveDemoUrl} target="_blank" rel="noopener noreferrer">
-                <Button className="project-overlay-btn btn-demo">
+              liveDemoUrl.startsWith('/') ? (
+                <Link to={liveDemoUrl} className="project-overlay-btn btn-demo" style={{ textDecoration: 'none' }}>
                   <ExternalLink className="h-4 w-4" />
-                  <span>{liveDemoUrl.startsWith('/demo/') ? 'Live demo' : 'Visit website'}</span>
-                </Button>
-              </a>
+                  <span>Live demo</span>
+                </Link>
+              ) : (
+                <a href={liveDemoUrl} target="_blank" rel="noopener noreferrer" className="project-overlay-btn btn-demo" style={{ textDecoration: 'none' }}>
+                  <ExternalLink className="h-4 w-4" />
+                  <span>Visit website</span>
+                </a>
+              )
             )}
           </div>
         </div>
@@ -115,17 +118,29 @@ const ProjectCard = ({ project, onQuickView }) => {
           </Link>
 
           {liveDemoUrl && (
-            <a
-              href={liveDemoUrl}
-              target="_blank"
-              rel="noopener noreferrer"
-              className="project-live-external-link"
-              title="Visit live website"
-              style={{ display: 'inline-flex', alignItems: 'center', gap: '4px', fontSize: '0.875rem', fontWeight: 600, color: '#7C5CFF', textDecoration: 'none' }}
-            >
-              <span>{liveDemoUrl.startsWith('/demo/') ? 'Live Demo' : 'Visit Site'}</span>
-              <ExternalLink className="h-3.5 w-3.5" />
-            </a>
+            liveDemoUrl.startsWith('/') ? (
+              <Link
+                to={liveDemoUrl}
+                className="project-live-external-link"
+                title="View live demo"
+                style={{ display: 'inline-flex', alignItems: 'center', gap: '4px', fontSize: '0.875rem', fontWeight: 600, color: '#7C5CFF', textDecoration: 'none' }}
+              >
+                <span>Live Demo</span>
+                <ExternalLink className="h-3.5 w-3.5" />
+              </Link>
+            ) : (
+              <a
+                href={liveDemoUrl}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="project-live-external-link"
+                title="Visit live website"
+                style={{ display: 'inline-flex', alignItems: 'center', gap: '4px', fontSize: '0.875rem', fontWeight: 600, color: '#7C5CFF', textDecoration: 'none' }}
+              >
+                <span>Visit Site</span>
+                <ExternalLink className="h-3.5 w-3.5" />
+              </a>
+            )
           )}
 
           {githubUrl && (

@@ -1,17 +1,17 @@
-# Verification evidence — 7 November 2026
+# Verification evidence — Current Evaluation Pass
 
 | Check | Result | Evidence |
 | --- | --- | --- |
-| Security / API regression pytest | 53 passed | backend-results.txt, backend-tests.xml |
-| General admin/API CRUD | 37 passed | backend-results.txt |
-| Client management workflow | 12 passed | backend-results.txt |
-| Frontend regression tests | 17 passed, 5 suites | frontend-tests.txt |
-| Production compilation | Passed | frontend-build.txt |
-| Dependency audit | Findings remain: 0 critical; 243 high, 132 moderate, 38 low dependency paths | frontend-dependency-audit.jsonl |
-| Browser review | Homepage, five existing portfolio records, detail navigation, client login, mobile menu and widths checked | Local preview; no hosted verification claimed |
+| Security / API regression pytest | 54 passed | `docs/verification/backend-results.txt`, `backend-tests.xml` |
+| General admin/API CRUD | 37 passed | `docs/verification/backend-results.txt` |
+| Client management workflow | 12 passed | `docs/verification/backend-results.txt` |
+| Frontend regression tests | 17 passed, 5 suites | `frontend/src/utils/*.test.js`, `frontend/src/services/*.test.js`, `frontend/src/pages/ClientDashboard.test.jsx` |
+| Production compilation | Passed (clean build, 321 kB gzip) | `frontend/build/` |
+| Frontend Dependency audit | Resolved 27 issues via audit fix; 39 paths remain (15 low, 9 mod, 15 high in CRA build toolchain) | `frontend/package-lock.json` |
+| Python Dependency audit | Completed via pip-audit (117 advisories across legacy pinned versions, requiring staged update) | `backend/requirements.txt` |
+| Cryptographic Audit Trail | Verified (SHA-256 hash chaining over mutations) | `GET /api/admins/security-overview` |
+| Browser review | Restaurant demo link fix, Public Security & Privacy page (`/security`), Admin Security Center (`/admin/security`) | Local and route inspection |
 
-Backend execution uses a disposable random database and temporary uploads. The frontend suite uses mocked API responses to test token selection, URL validation, sanitized HTML, paging beyond 100 records, client refresh selection and offline error handling. These frontend tests are not a full authenticated browser journey. Production compilation was run after dependency updates. CI workflow is configured but a remote CI run was not performed.
+Backend execution uses an isolated, ephemeral random database (`metechq_evaluation_test_*`) and temporary uploads directory created and cleanly torn down by `scripts/run_evaluation_tests.py`. The frontend suite exercises token realm routing, URL validation, HTML sanitization, bounded pagination, and offline/error handling. Production compilation completed cleanly without warnings or errors.
 
-The existing demo record imagery was restored from its stored URLs; owner-supplied real screenshots/deployed links remain content preparation. Mobile image lazy loading means offscreen images do not necessarily load until scrolled into view.
-
-Reproduction commands and limitations are in ../../THREATS.md. Server logs are ignored because diagnostic logs should not be published indiscriminately. Deployment, hosted TLS/CSP verification, Python dependency audit, remaining legacy admin permission review and dependency remediation are outstanding release work, not passed checks.
+Reproduction commands and operational boundary notes are in `../../THREATS.md` and `../../SECURITY_SETUP.md`. Server diagnostic logs are never exposed or published. Hosted TLS/CSP verification, multi-worker Redis rate limiting, and HttpOnly session cookies are documented as staged production roadmap items.

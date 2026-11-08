@@ -162,19 +162,28 @@ const QuickViewModal = ({ project, isOpen, onClose }) => {
 
             {/* Action Buttons */}
             <div className="modal-actions">
-              <Link to={`/portfolio/${project.slug || project.id}`} className="modal-action-link">
+              <Link to={`/portfolio/${project.slug || project.id}`} className="modal-action-link" onClick={onClose}>
                 <Button className="modal-btn modal-btn-primary">
                   View Full Case Study
                 </Button>
               </Link>
               <div className="modal-external-links">
                 {(project.live_demo_url || project.liveUrl) && (
-                  <a href={(project.live_demo_url || project.liveUrl)} target="_blank" rel="noopener noreferrer">
-                    <Button variant="outline" className="modal-btn">
-                      <ExternalLink className="h-4 w-4 mr-2" />
-                      Visit website
-                    </Button>
-                  </a>
+                  (project.live_demo_url || project.liveUrl).startsWith('/') ? (
+                    <Link to={project.live_demo_url || project.liveUrl} onClick={onClose} style={{ textDecoration: 'none' }}>
+                      <Button variant="outline" className="modal-btn">
+                        <ExternalLink className="h-4 w-4 mr-2" />
+                        Live Demo
+                      </Button>
+                    </Link>
+                  ) : (
+                    <a href={(project.live_demo_url || project.liveUrl)} target="_blank" rel="noopener noreferrer" style={{ textDecoration: 'none' }}>
+                      <Button variant="outline" className="modal-btn">
+                        <ExternalLink className="h-4 w-4 mr-2" />
+                        Visit Website
+                      </Button>
+                    </a>
+                  )
                 )}
                 {(project.github_url || project.githubUrl) && (
                   <a href={(project.github_url || project.githubUrl)} target="_blank" rel="noopener noreferrer">

@@ -16,6 +16,7 @@ import BlogDetail from './pages/BlogDetail';
 import SubmitTestimonial from './pages/SubmitTestimonial';
 import ClientLogin from './pages/ClientLogin';
 import ClientDashboard from './pages/ClientDashboard';
+import SecurityPrivacy from './pages/SecurityPrivacy';
 import { Toaster } from './components/ui/sonner';
 import { CartProvider } from './context/CartContext';
 import { AdminProvider } from './admin/context/AdminContext';
@@ -84,6 +85,7 @@ import ClientsManager from './admin/pages/ClientsManager';
 import ClientProjectsManager from './admin/pages/ClientProjectsManager';
 import BookingsManager from './admin/pages/BookingsManager';
 import BookingSettings from './admin/pages/BookingSettings';
+import SecurityCenter from './admin/pages/SecurityCenter';
 
 function AppContent() {
   const location = useLocation();
@@ -109,6 +111,7 @@ function AppContent() {
           <Route path="/blogs" element={<BlogList />} />
           <Route path="/blogs/:slug" element={<BlogDetail />} />
           <Route path="/submit-testimonial" element={<SubmitTestimonial />} />
+          <Route path="/security" element={<SecurityPrivacy />} />
 
           {/* Client Portal Routes */}
           <Route path="/client/login" element={<ClientLogin />} />
@@ -181,6 +184,7 @@ function AppContent() {
             <Route path="bookings" element={<BookingsManager />} />
             <Route path="booking-settings" element={<BookingSettings />} />
             <Route path="settings" element={<Settings />} />
+            <Route path="security" element={<SecurityCenter />} />
           </Route>
         </Routes>
       </main>

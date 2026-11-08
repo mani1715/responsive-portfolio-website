@@ -21,7 +21,8 @@ import {
   UserCog,
   FolderKanban,
   Calendar,
-  Clock
+  Clock,
+  ShieldCheck
 } from 'lucide-react';
 
 const Sidebar = ({ isOpen, onClose }) => {
@@ -59,6 +60,7 @@ const Sidebar = ({ isOpen, onClose }) => {
     { path: '/admin/notes', icon: StickyNote, label: 'Notes', permission: 'canManageNotes' },
     { path: '/admin/admins', icon: Users, label: 'Admins', permission: 'canManageAdmins' },
     { path: '/admin/settings', icon: Settings, label: 'Settings', permission: 'canManageSettings' },
+    { path: '/admin/security', icon: ShieldCheck, label: 'Security Center', permission: 'canManageSettings' },
   ];
 
   // Filter navigation items based on user permissions

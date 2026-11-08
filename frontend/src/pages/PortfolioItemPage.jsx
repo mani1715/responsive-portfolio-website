@@ -29,11 +29,49 @@ import './pages.css';
 const PortfolioItemPage = () => {
   const { id } = useParams();
   const [currentImageIndex, setCurrentImageIndex] = useState(0);
-  const [project, setProject] = useState(null);
+  const [project, setProject] = useState(() => {
+    try {
+      const cached = projectService.getCachedProjects();
+      const found = cached.find(p => p.slug === id || String(p.id) === id);
+      if (found) {
+        return {
+          id: found.id,
+          title: found.title,
+          slug: found.slug,
+          category: found.category,
+          description: found.description,
+          shortDesc: found.description,
+          longDesc: found.case_study_content || found.description,
+          image: found.image_url || found.image || '',
+          images: (found.images && found.images.length > 0) ? found.images : [found.image_url || found.image || ''],
+          technologies: found.tech_stack || found.technologies || [],
+          techStack: found.tech_stack || found.technologies || [],
+          featured: found.featured,
+          liveLink: found.live_demo_url || found.liveUrl,
+          githubLink: found.github_url || found.githubUrl,
+          status: found.status,
+          date: found.completion_date,
+          clientName: found.client_name,
+          metrics: found.metrics,
+          features: found.key_features || [],
+          duration: found.project_duration,
+          teamSize: found.team_size
+        };
+      }
+    } catch (e) {}
+    return null;
+  });
   const [relatedProjects, setRelatedProjects] = useState([]);
   const [loadError, setLoadError] = useState(false);
   const [attempt, setAttempt] = useState(0);
-  const [loading, setLoading] = useState(true);
+  const [loading, setLoading] = useState(() => {
+    try {
+      const cached = projectService.getCachedProjects();
+      return !cached.some(p => p.slug === id || String(p.id) === id);
+    } catch (e) {
+      return true;
+    }
+  });
   const [shareEnabled, setShareEnabled] = useState(true);
   
   // Fetch project and related projects from API
@@ -247,19 +285,19 @@ const PortfolioItemPage = () => {
                 {project.liveLink && (
                   <>
                     {project.liveLink.startsWith('/') ? (
-                      <Link to={project.liveLink}>
-                        <Button className="project-action-btn btn-primary" data-testid="live-demo-btn">
-                          <ExternalLink className="h-5 w-5" />
+                      <Button asChild className="project-action-btn btn-primary" data-testid="live-demo-btn">
+                        <Link to={project.liveLink}>
+                          <ExternalLink className="h-5 w-5 mr-2" />
                           <span>{project.liveLink.startsWith('/demo/') ? 'View live demo' : 'Visit deployed website'}</span>
-                        </Button>
-                      </Link>
+                        </Link>
+                      </Button>
                     ) : (
-                      <a href={project.liveLink} target="_blank" rel="noopener noreferrer">
-                        <Button className="project-action-btn btn-primary" data-testid="live-demo-btn">
-                          <ExternalLink className="h-5 w-5" />
+                      <Button asChild className="project-action-btn btn-primary" data-testid="live-demo-btn">
+                        <a href={project.liveLink} target="_blank" rel="noopener noreferrer">
+                          <ExternalLink className="h-5 w-5 mr-2" />
                           <span>{project.liveLink.startsWith('/demo/') ? 'View live demo' : 'Visit deployed website'}</span>
-                        </Button>
-                      </a>
+                        </a>
+                      </Button>
                     )}
                   </>
                 )}
