@@ -166,18 +166,22 @@ async def verify_audit_log_chain(limit: int = 1000) -> Dict[str, Any]:
     """
     Verifies cryptographic hash-chain integrity of audit log entries.
     Detects any modification, insertion, deletion, or reordering of records.
-    Never reports a partial/truncated audit scan as a complete verification.
+    Distinguishes 'all records scanned' from 'all records cryptographically verified'.
+    Never reports a mixed-legacy or truncated scan as a complete verification.
     """
     try:
         total_in_db = await audit_collection.count_documents({})
         cursor = audit_collection.find().sort("sequence", 1).limit(limit)
         entries = await cursor.to_list(length=limit)
+        records_scanned = len(entries)
 
         if total_in_db == 0:
             return {
                 "verified": True,
                 "chain_intact": True,
+                "fully_verified_collection": True,
                 "total_records_in_db": 0,
+                "records_scanned": 0,
                 "records_verified": 0,
                 "is_truncated": False,
                 "complete_scan": True,
@@ -210,9 +214,11 @@ async def verify_audit_log_chain(limit: int = 1000) -> Dict[str, Any]:
                     return {
                         "verified": False,
                         "chain_intact": False,
+                        "fully_verified_collection": False,
                         "total_records_in_db": total_in_db,
+                        "records_scanned": records_scanned,
                         "records_verified": records_verified,
-                        "is_truncated": total_in_db > len(entries),
+                        "is_truncated": total_in_db > records_scanned,
                         "complete_scan": False,
                         "legacy_records_skipped": legacy_records_skipped,
                         "status": "tampered",
@@ -229,9 +235,11 @@ async def verify_audit_log_chain(limit: int = 1000) -> Dict[str, Any]:
                 return {
                     "verified": False,
                     "chain_intact": False,
+                    "fully_verified_collection": False,
                     "total_records_in_db": total_in_db,
+                    "records_scanned": records_scanned,
                     "records_verified": records_verified,
-                    "is_truncated": total_in_db > len(entries),
+                    "is_truncated": total_in_db > records_scanned,
                     "complete_scan": False,
                     "legacy_records_skipped": legacy_records_skipped,
                     "status": "sequence_gap",
@@ -248,9 +256,11 @@ async def verify_audit_log_chain(limit: int = 1000) -> Dict[str, Any]:
                 return {
                     "verified": False,
                     "chain_intact": False,
+                    "fully_verified_collection": False,
                     "total_records_in_db": total_in_db,
+                    "records_scanned": records_scanned,
                     "records_verified": records_verified,
-                    "is_truncated": total_in_db > len(entries),
+                    "is_truncated": total_in_db > records_scanned,
                     "complete_scan": False,
                     "legacy_records_skipped": legacy_records_skipped,
                     "status": "broken_link",
@@ -295,9 +305,11 @@ async def verify_audit_log_chain(limit: int = 1000) -> Dict[str, Any]:
                     return {
                         "verified": False,
                         "chain_intact": False,
+                        "fully_verified_collection": False,
                         "total_records_in_db": total_in_db,
+                        "records_scanned": records_scanned,
                         "records_verified": records_verified,
-                        "is_truncated": total_in_db > len(entries),
+                        "is_truncated": total_in_db > records_scanned,
                         "complete_scan": False,
                         "legacy_records_skipped": legacy_records_skipped,
                         "status": "tampered",
@@ -313,53 +325,91 @@ async def verify_audit_log_chain(limit: int = 1000) -> Dict[str, Any]:
             expected_sequence += 1
             records_verified += 1
 
+        is_truncated = total_in_db > records_scanned
+        complete_scan = not is_truncated
+
+        # Case 1: Only unchained legacy records exist
         if records_verified == 0 and legacy_records_skipped > 0:
             return {
                 "verified": False,
                 "chain_intact": False,
+                "fully_verified_collection": False,
                 "total_records_in_db": total_in_db,
+                "records_scanned": records_scanned,
                 "records_verified": 0,
-                "is_truncated": total_in_db > len(entries),
-                "complete_scan": total_in_db <= len(entries),
+                "is_truncated": is_truncated,
+                "complete_scan": complete_scan,
                 "legacy_records_skipped": legacy_records_skipped,
                 "status": "legacy_unchained",
                 "broken_at_index": None,
                 "broken_sequence": None,
                 "error": "Audit log contains only unchained legacy records without cryptographic hashes.",
-                "message": f"No sequenced records found. {legacy_records_skipped} legacy records skipped.",
+                "message": f"No sequenced records found. {legacy_records_skipped} unchained legacy records skipped.",
                 "limit_applied": limit,
                 "security_boundary": AUDIT_SECURITY_BOUNDARY
             }
 
-        is_truncated = total_in_db > len(entries)
-        complete_scan = not is_truncated
+        # Case 2: Mixed log (legacy records skipped alongside verified chain)
+        # Even if all records were scanned, the collection is NOT fully verified because unchained records exist!
+        if legacy_records_skipped > 0:
+            return {
+                "verified": True,
+                "chain_intact": True,
+                "fully_verified_collection": False,
+                "total_records_in_db": total_in_db,
+                "records_scanned": records_scanned,
+                "records_verified": records_verified,
+                "is_truncated": is_truncated,
+                "complete_scan": complete_scan,
+                "legacy_records_skipped": legacy_records_skipped,
+                "status": "legacy_mixed_chain",
+                "broken_at_index": None,
+                "broken_sequence": None,
+                "error": None,
+                "message": (
+                    f"Mixed collection: {records_verified} records cryptographically verified, "
+                    f"but {legacy_records_skipped} unchained legacy records were skipped. "
+                    "Collection cannot be labeled fully verified."
+                ),
+                "limit_applied": limit,
+                "security_boundary": AUDIT_SECURITY_BOUNDARY
+            }
 
+        # Case 3: Truncated scan (limit reached before reaching end of collection)
         if is_truncated:
             return {
                 "verified": True,
                 "chain_intact": True,
+                "fully_verified_collection": False,
                 "total_records_in_db": total_in_db,
+                "records_scanned": records_scanned,
                 "records_verified": records_verified,
                 "is_truncated": True,
                 "complete_scan": False,
-                "legacy_records_skipped": legacy_records_skipped,
+                "legacy_records_skipped": 0,
                 "status": "partial_verified",
                 "broken_at_index": None,
                 "broken_sequence": None,
                 "error": None,
-                "message": f"Partial audit scan: verified {records_verified} of {total_in_db} records. Verification limit ({limit}) reached; scan is incomplete.",
+                "message": (
+                    f"Partial audit scan: verified {records_verified} of {total_in_db} records. "
+                    f"Verification limit ({limit}) reached; scan is incomplete."
+                ),
                 "limit_applied": limit,
                 "security_boundary": AUDIT_SECURITY_BOUNDARY
             }
 
+        # Case 4: Complete and fully verified collection (100% scanned, 0 legacy skipped, all hashes valid)
         return {
             "verified": True,
             "chain_intact": True,
+            "fully_verified_collection": True,
             "total_records_in_db": total_in_db,
+            "records_scanned": records_scanned,
             "records_verified": records_verified,
             "is_truncated": False,
             "complete_scan": True,
-            "legacy_records_skipped": legacy_records_skipped,
+            "legacy_records_skipped": 0,
             "status": "verified",
             "broken_at_index": None,
             "broken_sequence": None,
@@ -373,7 +423,9 @@ async def verify_audit_log_chain(limit: int = 1000) -> Dict[str, Any]:
         return {
             "verified": False,
             "chain_intact": False,
+            "fully_verified_collection": False,
             "total_records_in_db": 0,
+            "records_scanned": 0,
             "records_verified": 0,
             "is_truncated": False,
             "complete_scan": False,

@@ -1,186 +1,186 @@
-...........................................................              [100%]
+............................................................             [100%]
 ============================== warnings summary ===============================
 ..\..\..\Users\ettel\AppData\Local\Programs\Python\Python310\lib\site-packages\starlette\formparsers.py:12
   C:\Users\ettel\AppData\Local\Programs\Python\Python310\lib\site-packages\starlette\formparsers.py:12: PendingDeprecationWarning: Please use `import python_multipart` instead.
     import multipart
 
 -- Docs: https://docs.pytest.org/en/stable/how-to/capture-warnings.html
-59 passed, 1 warning in 6.28s
+60 passed, 1 warning in 12.63s
 
 🚀 Starting METECHQ Admin Panel API Tests
 ============================================================
 
 🔍 Testing API Health Check...
-   URL: http://127.0.0.1:64577/api/
+   URL: http://127.0.0.1:64563/api/
 ✅ API Health Check - PASSED
 
 🔍 Testing Admin Login (evaluation_admin)...
-   URL: http://127.0.0.1:64577/api/admins/login
+   URL: http://127.0.0.1:64563/api/admins/login
 ✅ Admin Login (evaluation_admin) - PASSED
    🔑 Token obtained: eyJhbGciOiJIUzI1NiIs...
 
 🔍 Testing Dashboard Stats...
-   URL: http://127.0.0.1:64577/api/analytics/summary
+   URL: http://127.0.0.1:64563/api/analytics/summary
 ✅ Dashboard Stats - PASSED
 
 📝 Testing About Management...
 
 🔍 Testing Get About Content...
-   URL: http://127.0.0.1:64577/api/about
+   URL: http://127.0.0.1:64563/api/about
 ✅ Get About Content - PASSED
 
 🔍 Testing Update About Content...
-   URL: http://127.0.0.1:64577/api/about
+   URL: http://127.0.0.1:64563/api/about
 ✅ Update About Content - PASSED
 
 🛠️ Testing Services Management...
 
 🔍 Testing Get All Services...
-   URL: http://127.0.0.1:64577/api/services
+   URL: http://127.0.0.1:64563/api/services
 ✅ Get All Services - PASSED
 
 🔍 Testing Create Service...
-   URL: http://127.0.0.1:64577/api/services
+   URL: http://127.0.0.1:64563/api/services
 ✅ Create Service - PASSED
 
 🔍 Testing Update Service...
-   URL: http://127.0.0.1:64577/api/services/d3b7e3a1-5f3d-4c67-89a6-2bbf059eea93
+   URL: http://127.0.0.1:64563/api/services/7cda59ac-8691-4e05-89bd-c390cde1a7da
 ✅ Update Service - PASSED
 
 🔍 Testing Delete Service...
-   URL: http://127.0.0.1:64577/api/services/d3b7e3a1-5f3d-4c67-89a6-2bbf059eea93
+   URL: http://127.0.0.1:64563/api/services/7cda59ac-8691-4e05-89bd-c390cde1a7da
 ✅ Delete Service - PASSED
 
 💼 Testing Portfolio Management...
 
 🔍 Testing Get All Projects...
-   URL: http://127.0.0.1:64577/api/projects
+   URL: http://127.0.0.1:64563/api/projects
 ✅ Get All Projects - PASSED
 
 🔍 Testing Create Project...
-   URL: http://127.0.0.1:64577/api/projects
+   URL: http://127.0.0.1:64563/api/projects
 ✅ Create Project - PASSED
 
 🔍 Testing Update Project...
-   URL: http://127.0.0.1:64577/api/projects/02666149-b604-432a-a468-df14945a6d8c
+   URL: http://127.0.0.1:64563/api/projects/f585f882-16c5-45bc-9303-523d567a0dc9
 ✅ Update Project - PASSED
 
 🔍 Testing Delete Project...
-   URL: http://127.0.0.1:64577/api/projects/02666149-b604-432a-a468-df14945a6d8c
+   URL: http://127.0.0.1:64563/api/projects/f585f882-16c5-45bc-9303-523d567a0dc9
 ✅ Delete Project - PASSED
 
 📰 Testing Blogs Management...
 
 🔍 Testing Get All Blogs...
-   URL: http://127.0.0.1:64577/api/blogs/admin/all
+   URL: http://127.0.0.1:64563/api/blogs/admin/all
 ✅ Get All Blogs - PASSED
 
 🔍 Testing Create Blog...
-   URL: http://127.0.0.1:64577/api/blogs/admin/create
+   URL: http://127.0.0.1:64563/api/blogs/admin/create
 ✅ Create Blog - PASSED
 
 🔍 Testing Update Blog...
-   URL: http://127.0.0.1:64577/api/blogs/admin/25e7d968-6ac6-4d55-834c-cdaa5addb7a5
+   URL: http://127.0.0.1:64563/api/blogs/admin/695aa0f6-36da-49e5-a643-7516dc7f1de4
 ✅ Update Blog - PASSED
 
 🔍 Testing Delete Blog...
-   URL: http://127.0.0.1:64577/api/blogs/admin/25e7d968-6ac6-4d55-834c-cdaa5addb7a5
+   URL: http://127.0.0.1:64563/api/blogs/admin/695aa0f6-36da-49e5-a643-7516dc7f1de4
 ✅ Delete Blog - PASSED
 
 💬 Testing Testimonials Management...
 
 🔍 Testing Get All Testimonials...
-   URL: http://127.0.0.1:64577/api/testimonials/admin/all
+   URL: http://127.0.0.1:64563/api/testimonials/admin/all
 ✅ Get All Testimonials - PASSED
 
 🔍 Testing Create Testimonial...
-   URL: http://127.0.0.1:64577/api/testimonials/admin/create
+   URL: http://127.0.0.1:64563/api/testimonials/admin/create
 ✅ Create Testimonial - PASSED
 
 🔍 Testing Update Testimonial...
-   URL: http://127.0.0.1:64577/api/testimonials/admin/52636bbb-f43f-4835-8562-df6384102ea8
+   URL: http://127.0.0.1:64563/api/testimonials/admin/c74998ea-19a9-44b8-b888-93ffdde60641
 ✅ Update Testimonial - PASSED
 
 🔍 Testing Delete Testimonial...
-   URL: http://127.0.0.1:64577/api/testimonials/admin/52636bbb-f43f-4835-8562-df6384102ea8
+   URL: http://127.0.0.1:64563/api/testimonials/admin/c74998ea-19a9-44b8-b888-93ffdde60641
 ✅ Delete Testimonial - PASSED
 
 📧 Testing Contacts Management...
 
 🔍 Testing Get All Contacts...
-   URL: http://127.0.0.1:64577/api/contacts/admin/all
+   URL: http://127.0.0.1:64563/api/contacts/admin/all
 ✅ Get All Contacts - PASSED
 
 🎯 Testing Skills Management...
 
 🔍 Testing Get All Skills...
-   URL: http://127.0.0.1:64577/api/skills
+   URL: http://127.0.0.1:64563/api/skills
 ✅ Get All Skills - PASSED
 
 🔍 Testing Create Skill...
-   URL: http://127.0.0.1:64577/api/skills
+   URL: http://127.0.0.1:64563/api/skills
 ✅ Create Skill - PASSED
 
 🔍 Testing Update Skill...
-   URL: http://127.0.0.1:64577/api/skills/8150526e-844d-4559-9b8d-64a8754a256c
+   URL: http://127.0.0.1:64563/api/skills/4d30c35c-b1fa-4454-9891-ac3349f0795b
 ✅ Update Skill - PASSED
 
 🔍 Testing Delete Skill...
-   URL: http://127.0.0.1:64577/api/skills/8150526e-844d-4559-9b8d-64a8754a256c
+   URL: http://127.0.0.1:64563/api/skills/4d30c35c-b1fa-4454-9891-ac3349f0795b
 ✅ Delete Skill - PASSED
 
 📝 Testing Notes Management...
 
 🔍 Testing Get All Notes...
-   URL: http://127.0.0.1:64577/api/notes
+   URL: http://127.0.0.1:64563/api/notes
 ✅ Get All Notes - PASSED
 
 🔍 Testing Create Note...
-   URL: http://127.0.0.1:64577/api/notes
+   URL: http://127.0.0.1:64563/api/notes
 ✅ Create Note - PASSED
 
 🔍 Testing Update Note...
-   URL: http://127.0.0.1:64577/api/notes/97d47c27-a8ba-4985-a887-5d1ef3418860
+   URL: http://127.0.0.1:64563/api/notes/0c5fcd3b-e0a4-40de-90e1-6108a5ab03b1
 ✅ Update Note - PASSED
 
 🔍 Testing Delete Note...
-   URL: http://127.0.0.1:64577/api/notes/97d47c27-a8ba-4985-a887-5d1ef3418860
+   URL: http://127.0.0.1:64563/api/notes/0c5fcd3b-e0a4-40de-90e1-6108a5ab03b1
 ✅ Delete Note - PASSED
 
 👥 Testing Admins Management...
 
 🔍 Testing Get All Admins...
-   URL: http://127.0.0.1:64577/api/admins/list
+   URL: http://127.0.0.1:64563/api/admins/list
 ✅ Get All Admins - PASSED
 
 ⚙️ Testing Settings Management...
 
 🔍 Testing Get Settings...
-   URL: http://127.0.0.1:64577/api/settings
+   URL: http://127.0.0.1:64563/api/settings
 ✅ Get Settings - PASSED
 
 🔍 Testing Update Settings...
-   URL: http://127.0.0.1:64577/api/settings
+   URL: http://127.0.0.1:64563/api/settings
 ✅ Update Settings - PASSED
 
 📅 Testing Booking Management...
 
 🔍 Testing Get Booking Settings...
-   URL: http://127.0.0.1:64577/api/booking-settings
+   URL: http://127.0.0.1:64563/api/booking-settings
 ✅ Get Booking Settings - PASSED
 
 🔍 Testing Get All Bookings...
-   URL: http://127.0.0.1:64577/api/bookings/admin/all
+   URL: http://127.0.0.1:64563/api/bookings/admin/all
 ✅ Get All Bookings - PASSED
 
 👤 Testing Client Management...
 
 🔍 Testing Get All Clients...
-   URL: http://127.0.0.1:64577/api/admin/clients
+   URL: http://127.0.0.1:64563/api/admin/clients
 ✅ Get All Clients - PASSED
 
 🔍 Testing Get Client Projects...
-   URL: http://127.0.0.1:64577/api/admin/client-projects
+   URL: http://127.0.0.1:64563/api/admin/client-projects
 ✅ Get Client Projects - PASSED
 
 ============================================================
@@ -195,62 +195,62 @@ Success Rate: 100.0%
 ======================================================================
 
 🔍 Testing Admin Login (evaluation_admin)...
-   URL: http://127.0.0.1:64577/api/admins/login
+   URL: http://127.0.0.1:64563/api/admins/login
 ✅ Admin Login (evaluation_admin) - PASSED
    🔑 Admin token obtained: eyJhbGciOiJIUzI1NiIs...
 
 👤 Testing Client Management...
 
 🔍 Testing Get All Clients...
-   URL: http://127.0.0.1:64577/api/admin/clients
+   URL: http://127.0.0.1:64563/api/admin/clients
 ✅ Get All Clients - PASSED
 
 🔍 Testing Create New Client...
-   URL: http://127.0.0.1:64577/api/admin/clients
+   URL: http://127.0.0.1:64563/api/admin/clients
 ✅ Create New Client - PASSED
-   📝 Created client ID: 7f5f00b0-b6af-440f-acae-bafda3a09567
+   📝 Created client ID: 7c3a27dd-4f8f-4e53-9201-f57dbe012fbc
 
 🔍 Testing Get Client by ID...
-   URL: http://127.0.0.1:64577/api/admin/clients/7f5f00b0-b6af-440f-acae-bafda3a09567
+   URL: http://127.0.0.1:64563/api/admin/clients/7c3a27dd-4f8f-4e53-9201-f57dbe012fbc
 ✅ Get Client by ID - PASSED
 
 🔍 Testing Update Client...
-   URL: http://127.0.0.1:64577/api/admin/clients/7f5f00b0-b6af-440f-acae-bafda3a09567
+   URL: http://127.0.0.1:64563/api/admin/clients/7c3a27dd-4f8f-4e53-9201-f57dbe012fbc
 ✅ Update Client - PASSED
 
 📋 Testing Project Management...
 
 🔍 Testing Get All Client Projects...
-   URL: http://127.0.0.1:64577/api/admin/client-projects
+   URL: http://127.0.0.1:64563/api/admin/client-projects
 ✅ Get All Client Projects - PASSED
 
 🔍 Testing Create Client Project...
-   URL: http://127.0.0.1:64577/api/admin/client-projects
+   URL: http://127.0.0.1:64563/api/admin/client-projects
 ✅ Create Client Project - PASSED
-   📋 Created project ID: c5b19b89-ae84-4ebc-8d04-e3476b89cf0a
+   📋 Created project ID: e80e0908-2969-4da4-85e5-33b2bf4fcdd9
 
 🔍 Testing Get Project by ID...
-   URL: http://127.0.0.1:64577/api/admin/client-projects/c5b19b89-ae84-4ebc-8d04-e3476b89cf0a
+   URL: http://127.0.0.1:64563/api/admin/client-projects/e80e0908-2969-4da4-85e5-33b2bf4fcdd9
 ✅ Get Project by ID - PASSED
 
 🔍 Testing Update Client Project...
-   URL: http://127.0.0.1:64577/api/admin/client-projects/c5b19b89-ae84-4ebc-8d04-e3476b89cf0a
+   URL: http://127.0.0.1:64563/api/admin/client-projects/e80e0908-2969-4da4-85e5-33b2bf4fcdd9
 ✅ Update Client Project - PASSED
 
 🏠 Testing Client Dashboard Access...
 
 🔍 Testing Client Login...
-   URL: http://127.0.0.1:64577/api/client/login
+   URL: http://127.0.0.1:64563/api/client/login
 ✅ Client Login - PASSED
 
 🧹 Cleaning up test data...
 
 🔍 Testing Delete Test Project...
-   URL: http://127.0.0.1:64577/api/admin/client-projects/c5b19b89-ae84-4ebc-8d04-e3476b89cf0a
+   URL: http://127.0.0.1:64563/api/admin/client-projects/e80e0908-2969-4da4-85e5-33b2bf4fcdd9
 ✅ Delete Test Project - PASSED
 
 🔍 Testing Delete Test Client...
-   URL: http://127.0.0.1:64577/api/admin/clients/7f5f00b0-b6af-440f-acae-bafda3a09567
+   URL: http://127.0.0.1:64563/api/admin/clients/7c3a27dd-4f8f-4e53-9201-f57dbe012fbc
 ✅ Delete Test Client - PASSED
 
 ======================================================================

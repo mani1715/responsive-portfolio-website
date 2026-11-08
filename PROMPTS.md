@@ -2185,3 +2185,28 @@ Review the current METECHQ security work in commit 151fbb7 and fix the verificat
 
 6. Run and record the relevant backend tests, frontend tests, production build, and dependency audits. Update the threat model, evaluation guide, verification report, and README so they match the code and actual results. Do not deploy or change production data/secrets.
 ```
+
+
+### C45 - Mixed legacy audit log verification, honest evidence timestamps, and regression coverage
+
+```text
+Review METECHQ commit d0e7df4 and fix these remaining Security Center accuracy issues.
+
+1. Mixed legacy audit logs:
+   - If the verifier skips any unchained legacy records, do not label the entire collection “Verified” or “Complete (100% of collection).”
+   - Report separately: total records scanned, hash-chained records verified, legacy records skipped, and whether the full collection was scanned.
+   - Mark the overall audit control “Needs attention” whenever any records were skipped or could not be verified.
+   - Update the Security Center so it explains the difference between “all records scanned” and “all records cryptographically verified.”
+   - Add a regression test for a collection containing legacy records followed by a valid hash chain. Assert it cannot show fully verified.
+
+2. Evidence timestamps:
+   - Do not set last_verified to the current page-load time for controls that were not checked at that time.
+   - For automated-test controls, show the real CI/test evidence date and commit, if available. Otherwise label the result as recorded test evidence and omit a misleading current timestamp.
+   - For dependency findings, show the actual audit run date and the audited lockfile/requirements version. Do not show stale hard-coded counts as freshly checked.
+   - Reserve “checked now” for checks the endpoint actually runs, such as its live JWT-key comparison and audit-chain scan.
+   - Make the UI distinguish live runtime checks, CI/test evidence, dependency audit findings, and hosted checks that remain unverified.
+
+3. Rerun the audit-chain tests, backend suite, frontend tests, and production build. Confirm GitHub Actions passes on the resulting commit. Keep all remaining dependency findings visible and accurately scoped; do not claim security is complete or deploy without authorization.
+
+Report the code changes, test results, and any remaining issues.
+```

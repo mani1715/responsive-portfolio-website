@@ -11,7 +11,8 @@ import {
   Server, 
   ExternalLink,
   Search,
-  Clock
+  Clock,
+  Info
 } from 'lucide-react';
 import axios from 'axios';
 import { getBackendURL } from '../../lib/utils';
@@ -133,6 +134,67 @@ const SecurityCenter = () => {
     }
   };
 
+  const getEvidenceTypeBadge = (control) => {
+    if (control.is_live_check) {
+      return (
+        <span style={{
+          fontSize: '0.72rem',
+          padding: '2px 8px',
+          borderRadius: '4px',
+          background: 'rgba(16, 185, 129, 0.08)',
+          color: '#059669',
+          border: '1px solid rgba(16, 185, 129, 0.25)',
+          fontWeight: 600
+        }}>
+          ● Live Runtime Check
+        </span>
+      );
+    }
+    if (control.evidence_type === 'recorded_test_evidence') {
+      return (
+        <span style={{
+          fontSize: '0.72rem',
+          padding: '2px 8px',
+          borderRadius: '4px',
+          background: 'rgba(79, 70, 229, 0.08)',
+          color: '#4F46E5',
+          border: '1px solid rgba(79, 70, 229, 0.25)',
+          fontWeight: 600
+        }}>
+          ◈ Recorded CI Test Evidence
+        </span>
+      );
+    }
+    if (control.evidence_type === 'dependency_audit_report') {
+      return (
+        <span style={{
+          fontSize: '0.72rem',
+          padding: '2px 8px',
+          borderRadius: '4px',
+          background: 'rgba(245, 158, 11, 0.08)',
+          color: '#D97706',
+          border: '1px solid rgba(245, 158, 11, 0.25)',
+          fontWeight: 600
+        }}>
+          📋 Dependency Audit Pass
+        </span>
+      );
+    }
+    return (
+      <span style={{
+        fontSize: '0.72rem',
+        padding: '2px 8px',
+        borderRadius: '4px',
+        background: 'rgba(107, 114, 128, 0.08)',
+        color: '#6B7280',
+        border: '1px solid rgba(107, 114, 128, 0.25)',
+        fontWeight: 600
+      }}>
+        ◌ Hosted Scope Pending
+      </span>
+    );
+  };
+
   return (
     <div style={{ maxWidth: '1200px', margin: '0 auto', paddingBottom: '3rem' }}>
       {/* Header */}
@@ -243,7 +305,7 @@ const SecurityCenter = () => {
             {summary.verified_count}
           </div>
           <div style={{ fontSize: '0.8rem', color: '#059669', marginTop: '0.25rem' }}>
-            Confirmed by live checks & tests
+            Confirmed by live checks & test runs
           </div>
         </div>
 
@@ -324,21 +386,25 @@ const SecurityCenter = () => {
               gap: '6px',
               padding: '6px 14px',
               borderRadius: '9999px',
-              background: (auditChain.verified && auditChain.complete_scan) ? 'rgba(16, 185, 129, 0.1)' : 'rgba(245, 158, 11, 0.1)',
-              color: (auditChain.verified && auditChain.complete_scan) ? '#10B981' : '#D97706',
+              background: auditChain.fully_verified_collection 
+                ? 'rgba(16, 185, 129, 0.1)' 
+                : 'rgba(245, 158, 11, 0.1)',
+              color: auditChain.fully_verified_collection ? '#10B981' : '#D97706',
               fontSize: '0.85rem',
               fontWeight: 600
             }}>
-              {(auditChain.verified && auditChain.complete_scan) ? <CheckCircle2 size={15} /> : <AlertTriangle size={15} />}
-              {auditChain.verified
-                ? (auditChain.complete_scan ? 'Complete Chain Intact' : 'Partial Scan Intact (Limit Reached)')
-                : 'Integrity Mismatch Detected'}
+              {auditChain.fully_verified_collection ? <CheckCircle2 size={15} /> : <AlertTriangle size={15} />}
+              {auditChain.fully_verified_collection
+                ? 'Complete Cryptographic Chain Verified'
+                : (auditChain.legacy_records_skipped > 0
+                    ? `Mixed Log: ${auditChain.legacy_records_skipped} Legacy Skipped`
+                    : (auditChain.is_truncated ? 'Partial Scan: Limit Reached' : 'Integrity Mismatch Detected'))}
             </div>
           </div>
 
           <div style={{
             display: 'grid',
-            gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))',
+            gridTemplateColumns: 'repeat(auto-fit, minmax(180px, 1fr))',
             gap: '1rem',
             background: 'var(--bg-subtle, #F9FAFB)',
             padding: '1rem',
@@ -346,20 +412,56 @@ const SecurityCenter = () => {
             fontSize: '0.85rem'
           }}>
             <div>
-              <span style={{ color: 'var(--text-muted, #6B7280)' }}>Records Verified:</span>{' '}
+              <span style={{ color: 'var(--text-muted, #6B7280)' }}>Total in DB:</span>{' '}
               <strong style={{ color: 'var(--text-primary, #111827)' }}>
-                {auditChain.records_verified ?? 0} of {auditChain.total_records_in_db ?? 0} in DB
+                {auditChain.total_records_in_db ?? 0} records
+              </strong>
+            </div>
+            <div>
+              <span style={{ color: 'var(--text-muted, #6B7280)' }}>Records Scanned:</span>{' '}
+              <strong style={{ color: 'var(--text-primary, #111827)' }}>
+                {auditChain.records_scanned ?? 0}
+              </strong>
+            </div>
+            <div>
+              <span style={{ color: 'var(--text-muted, #6B7280)' }}>Hash-Chained Verified:</span>{' '}
+              <strong style={{ color: '#059669' }}>
+                {auditChain.records_verified ?? 0}
+              </strong>
+            </div>
+            <div>
+              <span style={{ color: 'var(--text-muted, #6B7280)' }}>Legacy Skipped:</span>{' '}
+              <strong style={{ color: auditChain.legacy_records_skipped > 0 ? '#D97706' : '#111827' }}>
+                {auditChain.legacy_records_skipped ?? 0}
               </strong>
             </div>
             <div>
               <span style={{ color: 'var(--text-muted, #6B7280)' }}>Scan Coverage:</span>{' '}
               <strong style={{ color: 'var(--text-primary, #111827)' }}>
-                {auditChain.complete_scan ? 'Complete (100% of collection)' : 'Partial / Truncated'}
+                {auditChain.complete_scan ? '100% of collection' : 'Truncated'}
               </strong>
             </div>
+          </div>
+
+          {/* Explanatory callout distinguishing scanned vs cryptographically verified */}
+          <div style={{
+            marginTop: '1rem',
+            padding: '10px 14px',
+            borderRadius: '8px',
+            background: 'rgba(59, 130, 246, 0.05)',
+            border: '1px solid rgba(59, 130, 246, 0.15)',
+            fontSize: '0.82rem',
+            color: '#1E40AF',
+            display: 'flex',
+            alignItems: 'flex-start',
+            gap: '8px'
+          }}>
+            <Info size={16} style={{ flexShrink: 0, marginTop: '2px', color: '#2563EB' }} />
             <div>
-              <span style={{ color: 'var(--text-muted, #6B7280)' }}>Algorithm & Mutex:</span>{' '}
-              <strong style={{ color: 'var(--text-primary, #111827)' }}>Unkeyed SHA-256 (Process Lock)</strong>
+              <strong>Understanding Scan Coverage vs Cryptographic Verification:</strong>{' '}
+              <em>Records scanned</em> reflects how many documents were retrieved and parsed. 
+              <em>Hash-chained verified</em> reflects records whose cryptographic SHA-256 signatures matched the preceding block. 
+              If unchained legacy records exist, the scan may be 100% complete across the collection, but the collection cannot be certified as fully cryptographically verified.
             </div>
           </div>
 
@@ -463,18 +565,7 @@ const SecurityCenter = () => {
                     }}>
                       {control.category}
                     </span>
-                    {control.verification_scope && (
-                      <span style={{
-                        fontSize: '0.72rem',
-                        padding: '2px 7px',
-                        borderRadius: '4px',
-                        background: 'rgba(37, 99, 235, 0.08)',
-                        color: '#2563EB',
-                        border: '1px solid rgba(37, 99, 235, 0.2)'
-                      }}>
-                        Scope: {control.verification_scope}
-                      </span>
-                    )}
+                    {getEvidenceTypeBadge(control)}
                   </div>
                   <p style={{ margin: '6px 0 0', fontSize: '0.88rem', color: 'var(--text-secondary, #4B5563)', lineHeight: 1.5 }}>
                     {control.description}
@@ -503,10 +594,26 @@ const SecurityCenter = () => {
                   <FileText size={14} style={{ color: '#6B7280', flexShrink: 0 }} />
                   <span><strong>Evidence:</strong> {control.evidence}</span>
                 </div>
-                {control.last_verified && (
-                  <div style={{ fontSize: '0.75rem', color: '#9CA3AF', display: 'flex', alignItems: 'center', gap: '4px' }}>
+                
+                {control.is_live_check && control.last_verified ? (
+                  <div style={{ fontSize: '0.75rem', color: '#059669', display: 'flex', alignItems: 'center', gap: '4px' }}>
                     <Clock size={12} />
-                    <span>Checked: {new Date(control.last_verified).toLocaleDateString()}</span>
+                    <span>Checked live at: {new Date(control.last_verified).toLocaleTimeString()}</span>
+                  </div>
+                ) : control.evidence_type === 'recorded_test_evidence' ? (
+                  <div style={{ fontSize: '0.75rem', color: '#4F46E5', display: 'flex', alignItems: 'center', gap: '4px' }}>
+                    <CheckCircle2 size={12} />
+                    <span>Recorded from CI test run</span>
+                  </div>
+                ) : control.evidence_type === 'dependency_audit_report' ? (
+                  <div style={{ fontSize: '0.75rem', color: '#D97706', display: 'flex', alignItems: 'center', gap: '4px' }}>
+                    <AlertTriangle size={12} />
+                    <span>Recorded from package lockfile audit</span>
+                  </div>
+                ) : (
+                  <div style={{ fontSize: '0.75rem', color: '#9CA3AF', display: 'flex', alignItems: 'center', gap: '4px' }}>
+                    <HelpCircle size={12} />
+                    <span>Pending cloud deployment review</span>
                   </div>
                 )}
               </div>
@@ -534,13 +641,13 @@ const SecurityCenter = () => {
         </h3>
         <ul style={{ margin: 0, paddingLeft: '1.25rem', fontSize: '0.88rem', color: 'var(--text-secondary, #4B5563)', lineHeight: 1.6 }}>
           <li>
-            <strong>Token Realm Separation:</strong> Distinct 32+ character HMAC-SHA256 secrets ensure an admin token cannot authorize a client endpoint, and vice versa. Verified by automated unit and API integration tests.
+            <strong>Token Realm Separation:</strong> Distinct 32+ character HMAC-SHA256 secrets ensure an admin token cannot authorize a client endpoint, and vice versa. Verified live at request time.
           </li>
           <li>
             <strong>Client Isolation:</strong> Database queries enforce <code>client_id</code> constraints on projects, tasks, milestones, comments, and private files. Cross-client access attempts return 404 or 401.
           </li>
           <li>
-            <strong>Audit Log Integrity:</strong> Unkeyed SHA-256 hash chaining detects mutations, sequence deletions, and reordering. Process-local lock synchronizes appends within a worker. It does not prevent a database administrator with direct MongoDB access from recomputing hashes.
+            <strong>Audit Log Integrity & Mixed Logs:</strong> Unkeyed SHA-256 hash chaining detects mutations, sequence deletions, and reordering. If unchained legacy records exist, the verifier skips them to evaluate the chained portion but marks the overall control <code>Needs attention</code> to distinguish scanned records from fully certified records.
           </li>
           <li>
             <strong>Rate Limiting Scope:</strong> In-memory sliding window operates per backend worker process. Multi-worker production clusters require Redis (<code>REDIS_URL</code>).

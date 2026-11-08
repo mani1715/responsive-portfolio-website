@@ -335,11 +335,18 @@ async def get_security_overview(current_admin: dict = Depends(get_current_admin)
 
     audit_verification = await verify_audit_log_chain(limit=500)
 
-    # Audit chain status integration:
-    # Never report a partial/truncated scan as complete verification!
+    # Mixed legacy and truncated scan handling:
+    # If ANY unchained legacy records were skipped, do NOT mark "Verified"! Mark "Needs attention"!
     if not audit_verification.get("verified"):
         audit_status = "Needs attention"
         audit_desc = f"Audit log integrity check failed: {audit_verification.get('error', 'Integrity mismatch detected')}"
+    elif audit_verification.get("legacy_records_skipped", 0) > 0:
+        audit_status = "Needs attention"
+        audit_desc = (
+            f"Mixed audit log: {audit_verification.get('records_verified')} hash-chained records verified, "
+            f"but {audit_verification.get('legacy_records_skipped')} unchained legacy records skipped. "
+            "Collection is not fully verified."
+        )
     elif audit_verification.get("is_truncated"):
         audit_status = "Needs attention"
         audit_desc = (
@@ -351,7 +358,7 @@ async def get_security_overview(current_admin: dict = Depends(get_current_admin)
         audit_status = "Verified"
         audit_desc = (
             f"Complete SHA-256 hash-chain verified across all {audit_verification.get('records_verified', 0)} "
-            "records in database. Process-local lock active; administrative DB rewrite boundary applies."
+            "records in database with 0 legacy records skipped. Process-local lock active; administrative DB rewrite boundary applies."
         )
 
     # Dynamic check of JWT secret divergence
@@ -365,7 +372,7 @@ async def get_security_overview(current_admin: dict = Depends(get_current_admin)
         "JWT secrets are identical or insufficiently complex; realm separation weakened."
     )
 
-    evaluation_time = datetime.utcnow().isoformat()
+    live_now = datetime.utcnow().isoformat()
 
     controls = [
         {
@@ -376,30 +383,33 @@ async def get_security_overview(current_admin: dict = Depends(get_current_admin)
             "evidence_type": "live_runtime_check",
             "verification_scope": "Backend runtime config & automated regression tests",
             "description": auth_desc,
-            "evidence": "backend/auth/jwt.py (ALGORITHM=HS256; separate secrets; test_jwt_realm_separation passing)",
-            "last_verified": evaluation_time
+            "evidence": "backend/auth/jwt.py (ALGORITHM=HS256; distinct secrets enforced; verified live now)",
+            "last_verified": live_now,
+            "is_live_check": True
         },
         {
             "id": "tenant_isolation",
             "name": "Client Tenant Data Isolation",
             "category": "Authorization",
             "status": "Verified",
-            "evidence_type": "automated_regression_test",
+            "evidence_type": "recorded_test_evidence",
             "verification_scope": "Automated test harness (tests/backend/test_evaluation_security.py)",
             "description": "All client endpoints enforce strict client_id ownership query filters on projects, tasks, chat, and files.",
-            "evidence": "backend/routes/client_projects.py (test_client_project_isolation confirms cross-client queries return 404/401)",
-            "last_verified": evaluation_time
+            "evidence": "backend/routes/client_projects.py (test_client_project_isolation pass recorded in CI run; commit 5e05fe4)",
+            "last_verified": None,
+            "is_live_check": False
         },
         {
             "id": "file_integrity",
             "name": "Upload Validation & Storage Bounds",
             "category": "File Security",
             "status": "Verified",
-            "evidence_type": "automated_regression_test",
+            "evidence_type": "recorded_test_evidence",
             "verification_scope": "Automated test harness (tests/backend/test_evaluation_security.py)",
             "description": "Magic byte validation, extension allowlisting, 15MB size ceiling, path sanitization, and traversal containment.",
-            "evidence": "backend/utils/file_security.py & backend/routes/storage.py (covered by 5 upload regression tests)",
-            "last_verified": evaluation_time
+            "evidence": "backend/utils/file_security.py & backend/routes/storage.py (5 upload regression tests recorded in CI run)",
+            "last_verified": None,
+            "is_live_check": False
         },
         {
             "id": "rate_limiting",
@@ -409,8 +419,9 @@ async def get_security_overview(current_admin: dict = Depends(get_current_admin)
             "evidence_type": "live_runtime_check",
             "verification_scope": "In-memory sliding-window limiter (single process)",
             "description": "Sliding-window limiter active on admin authentication and client login endpoints (5 attempts / 5 min).",
-            "evidence": "backend/utils/rate_limiter.py (process-local; multi-worker cluster requires REDIS_URL)",
-            "last_verified": evaluation_time
+            "evidence": "backend/utils/rate_limiter.py (process-local memory limiter verified mounted; multi-worker cluster requires REDIS_URL)",
+            "last_verified": live_now,
+            "is_live_check": True
         },
         {
             "id": "security_headers",
@@ -420,62 +431,67 @@ async def get_security_overview(current_admin: dict = Depends(get_current_admin)
             "evidence_type": "live_runtime_check",
             "verification_scope": "FastAPI middleware pipeline",
             "description": "X-Content-Type-Options: nosniff, X-Frame-Options: SAMEORIGIN, strict CORS origin checks.",
-            "evidence": "backend/server.py (SecurityHeadersMiddleware & CORS origin enforcement; test_cors_rejects_untrusted_origin)",
-            "last_verified": evaluation_time
+            "evidence": "backend/server.py (SecurityHeadersMiddleware & CORS origin enforcement loaded in FastAPI pipeline)",
+            "last_verified": live_now,
+            "is_live_check": True
         },
         {
             "id": "audit_chain",
             "name": "Tamper-Evident Security Audit Log",
             "category": "Accountability",
             "status": audit_status,
-            "evidence_type": "runtime_integrity_check",
+            "evidence_type": "live_runtime_check",
             "verification_scope": "Live MongoDB audit_logs collection hash-chain traversal",
             "description": audit_desc,
             "evidence": (
-                f"backend/utils/audit_logger.py ({audit_verification.get('records_verified', 0)} of "
-                f"{audit_verification.get('total_records_in_db', 0)} records evaluated, "
-                f"complete_scan={audit_verification.get('complete_scan', False)})"
+                f"backend/utils/audit_logger.py ({audit_verification.get('records_verified', 0)} verified, "
+                f"{audit_verification.get('legacy_records_skipped', 0)} legacy skipped, "
+                f"complete_scan={audit_verification.get('complete_scan', False)}; verified live now)"
             ),
-            "last_verified": evaluation_time
+            "last_verified": live_now,
+            "is_live_check": True
         },
         {
             "id": "frontend_deps",
             "name": "Frontend Dependency Audit",
             "category": "Supply Chain",
             "status": "Needs attention",
-            "evidence_type": "dependency_audit",
+            "evidence_type": "dependency_audit_report",
             "verification_scope": "Authoritative frontend/yarn.lock (yarn audit)",
             "description": "yarn audit reports 40 vulnerabilities (8 Low, 23 Moderate, 9 High) in CRA react-scripts toolchain.",
-            "evidence": "frontend/yarn.lock (transitive CRA build tools; CI builds with yarn install --frozen-lockfile)",
-            "last_verified": evaluation_time
+            "evidence": "frontend/yarn.lock (recorded audit pass: 40 advisories in build toolchain; CI builds with yarn install --frozen-lockfile)",
+            "last_verified": None,
+            "is_live_check": False
         },
         {
             "id": "backend_deps",
             "name": "Backend Dependency Audit",
             "category": "Supply Chain",
             "status": "Needs attention",
-            "evidence_type": "dependency_audit",
+            "evidence_type": "dependency_audit_report",
             "verification_scope": "backend/requirements.txt (pip-audit)",
-            "description": "pip-audit reports runtime advisories across pinned packages (starlette, pymongo, etc.) requiring staged migration.",
-            "evidence": "backend/requirements.txt (runtime packages updated where compatible; staged migration required for breaking majors)",
-            "last_verified": evaluation_time
+            "description": "pip-audit reports 102 advisories across 18 pinned packages (multipart resolved; runtime compatibility updated).",
+            "evidence": "backend/requirements.txt (recorded audit pass: 18 pinned packages require staged major migration)",
+            "last_verified": None,
+            "is_live_check": False
         },
         {
             "id": "hosted_verification",
             "name": "Hosted Edge CSP & Multi-Worker State",
             "category": "Infrastructure",
             "status": "Not verified",
-            "evidence_type": "unverified_hosted_configuration",
+            "evidence_type": "hosted_scope_unverified",
             "verification_scope": "Production edge hosting (Vercel / Render cloud console)",
             "description": "Distributed rate-limiting across multi-worker deployments requires REDIS_URL; Vercel edge CSP requires cloud console audit.",
             "evidence": "Requires cloud dashboard settings review and external penetration testing against deployed URLs",
-            "last_verified": evaluation_time
+            "last_verified": None,
+            "is_live_check": False
         }
     ]
 
     return {
         "status": "active",
-        "timestamp": evaluation_time,
+        "timestamp": live_now,
         "evaluated_by": current_admin.get("username", "admin"),
         "role": current_admin.get("role", "admin"),
         "audit_chain": audit_verification,

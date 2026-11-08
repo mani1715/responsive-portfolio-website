@@ -161,11 +161,15 @@ def test_admin_security_overview_requires_authentication(api_context):
     data = response.json()
     assert data['status'] == 'active'
     assert 'controls' in data
-    assert any(c['id'] == 'auth_separation' and c['status'] == 'Verified' for c in data['controls'])
-    assert any(c['id'] == 'tenant_isolation' and c['status'] == 'Verified' for c in data['controls'])
-    assert any(c['id'] == 'file_integrity' and c['status'] == 'Verified' for c in data['controls'])
-    assert any(c['id'] == 'frontend_deps' and c['status'] == 'Needs attention' for c in data['controls'])
+    assert any(c['id'] == 'auth_separation' and c['status'] == 'Verified' and c['is_live_check'] is True for c in data['controls'])
+    assert any(c['id'] == 'tenant_isolation' and c['status'] == 'Verified' and c['is_live_check'] is False and c['last_verified'] is None for c in data['controls'])
+    assert any(c['id'] == 'file_integrity' and c['status'] == 'Verified' and c['is_live_check'] is False and c['last_verified'] is None for c in data['controls'])
+    assert any(c['id'] == 'frontend_deps' and c['status'] == 'Needs attention' and c['is_live_check'] is False for c in data['controls'])
     assert any(c['id'] == 'hosted_verification' and c['status'] == 'Not verified' for c in data['controls'])
+    assert 'audit_chain' in data
+    assert 'records_scanned' in data['audit_chain']
+    assert 'legacy_records_skipped' in data['audit_chain']
+    assert 'fully_verified_collection' in data['audit_chain']
 
 # ==============================================================================
 # AUDIT CHAIN INTEGRITY & BOUNDARY TESTS
@@ -310,3 +314,36 @@ async def test_audit_chain_legacy_entries_and_midchain_detection(monkeypatch):
     assert res_mid["verified"] is False
     assert res_mid["status"] == "tampered"
     assert "Unchained legacy entry" in res_mid["error"]
+
+@pytest.mark.asyncio
+async def test_audit_chain_mixed_legacy_collection_cannot_show_fully_verified(monkeypatch):
+    """
+    Asserts that a collection containing pre-chaining legacy records followed by a valid
+    hash chain cannot show fully verified (fully_verified_collection must be False,
+    legacy_records_skipped > 0, and status indicates mixed legacy chain).
+    """
+    from utils.audit_logger import compute_entry_hash, verify_audit_log_chain, GENESIS_HASH
+    import utils.audit_logger as al
+
+    legacy1 = {"timestamp": "2026-11-07T00:00:00", "action": "legacy_seed_record"}
+    h1 = compute_entry_hash(1, "2026-11-08T10:00:00", "admin1", "Admin", "admin", "login", "auth", "", "127.0.0.1", "success", GENESIS_HASH, {})
+    e1 = {"sequence": 1, "timestamp": "2026-11-08T10:00:00", "actor_id": "admin1", "actor_name": "Admin", "actor_role": "admin", "action": "login", "resource_type": "auth", "resource_id": "", "ip_address": "127.0.0.1", "status": "success", "prev_hash": GENESIS_HASH, "entry_hash": h1, "details": {}}
+    h2 = compute_entry_hash(2, "2026-11-08T10:01:00", "admin1", "Admin", "admin", "update", "setting", "1", "127.0.0.1", "success", h1, {"setting": "theme"})
+    e2 = {"sequence": 2, "timestamp": "2026-11-08T10:01:00", "actor_id": "admin1", "actor_name": "Admin", "actor_role": "admin", "action": "update", "resource_type": "setting", "resource_id": "1", "ip_address": "127.0.0.1", "status": "success", "prev_hash": h1, "entry_hash": h2, "details": {"setting": "theme"}}
+
+    mock_coll = _MockAuditCollection([legacy1, e1, e2])
+    monkeypatch.setattr(al, "audit_collection", mock_coll)
+
+    res = await verify_audit_log_chain(limit=10)
+
+    # 1. Scanned metrics
+    assert res["records_scanned"] == 3
+    assert res["total_records_in_db"] == 3
+    assert res["records_verified"] == 2
+    assert res["legacy_records_skipped"] == 1
+    assert res["complete_scan"] is True  # all 3 records in collection were scanned
+
+    # 2. Critical assertion: CANNOT show fully verified
+    assert res["fully_verified_collection"] is False
+    assert res["status"] == "legacy_mixed_chain"
+    assert "Collection cannot be labeled fully verified" in res["message"]
