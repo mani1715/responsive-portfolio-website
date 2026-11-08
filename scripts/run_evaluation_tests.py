@@ -53,7 +53,7 @@ def main():
                 else:
                     raise RuntimeError('Test API did not become ready')
                 commands = [
-                    [sys.executable,'-m','pytest','tests/backend/test_comprehensive_security.py','tests/backend/test_evaluation_security.py','-q','--junitxml='+str(reports/'backend-tests.xml')],
+                    [sys.executable,'-m','pytest','tests/backend/test_comprehensive_security.py','tests/backend/test_evaluation_security.py','tests/backend/test_check_dependency_audits.py','-q','--junitxml='+str(reports/'backend-tests.xml')],
                     [sys.executable,'tests/backend/backend_test.py'],
                     [sys.executable,'tests/backend/client_management_test.py'],
                 ]

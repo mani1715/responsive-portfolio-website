@@ -1,186 +1,186 @@
-.............................................................            [100%]
+........................................................................ [100%]
 ============================== warnings summary ===============================
 ..\..\..\Users\ettel\AppData\Local\Programs\Python\Python310\lib\site-packages\starlette\formparsers.py:12
   C:\Users\ettel\AppData\Local\Programs\Python\Python310\lib\site-packages\starlette\formparsers.py:12: PendingDeprecationWarning: Please use `import python_multipart` instead.
     import multipart
 
 -- Docs: https://docs.pytest.org/en/stable/how-to/capture-warnings.html
-61 passed, 1 warning in 13.16s
+72 passed, 1 warning in 13.39s
 
 🚀 Starting METECHQ Admin Panel API Tests
 ============================================================
 
 🔍 Testing API Health Check...
-   URL: http://127.0.0.1:58194/api/
+   URL: http://127.0.0.1:60269/api/
 ✅ API Health Check - PASSED
 
 🔍 Testing Admin Login (evaluation_admin)...
-   URL: http://127.0.0.1:58194/api/admins/login
+   URL: http://127.0.0.1:60269/api/admins/login
 ✅ Admin Login (evaluation_admin) - PASSED
    🔑 Token obtained: eyJhbGciOiJIUzI1NiIs...
 
 🔍 Testing Dashboard Stats...
-   URL: http://127.0.0.1:58194/api/analytics/summary
+   URL: http://127.0.0.1:60269/api/analytics/summary
 ✅ Dashboard Stats - PASSED
 
 📝 Testing About Management...
 
 🔍 Testing Get About Content...
-   URL: http://127.0.0.1:58194/api/about
+   URL: http://127.0.0.1:60269/api/about
 ✅ Get About Content - PASSED
 
 🔍 Testing Update About Content...
-   URL: http://127.0.0.1:58194/api/about
+   URL: http://127.0.0.1:60269/api/about
 ✅ Update About Content - PASSED
 
 🛠️ Testing Services Management...
 
 🔍 Testing Get All Services...
-   URL: http://127.0.0.1:58194/api/services
+   URL: http://127.0.0.1:60269/api/services
 ✅ Get All Services - PASSED
 
 🔍 Testing Create Service...
-   URL: http://127.0.0.1:58194/api/services
+   URL: http://127.0.0.1:60269/api/services
 ✅ Create Service - PASSED
 
 🔍 Testing Update Service...
-   URL: http://127.0.0.1:58194/api/services/f5417e9f-6458-40a4-b1d3-1c287ec71432
+   URL: http://127.0.0.1:60269/api/services/ac93ccf4-7a3d-44e3-b42c-e50d7819c322
 ✅ Update Service - PASSED
 
 🔍 Testing Delete Service...
-   URL: http://127.0.0.1:58194/api/services/f5417e9f-6458-40a4-b1d3-1c287ec71432
+   URL: http://127.0.0.1:60269/api/services/ac93ccf4-7a3d-44e3-b42c-e50d7819c322
 ✅ Delete Service - PASSED
 
 💼 Testing Portfolio Management...
 
 🔍 Testing Get All Projects...
-   URL: http://127.0.0.1:58194/api/projects
+   URL: http://127.0.0.1:60269/api/projects
 ✅ Get All Projects - PASSED
 
 🔍 Testing Create Project...
-   URL: http://127.0.0.1:58194/api/projects
+   URL: http://127.0.0.1:60269/api/projects
 ✅ Create Project - PASSED
 
 🔍 Testing Update Project...
-   URL: http://127.0.0.1:58194/api/projects/2a87e403-2b3a-4572-b431-6dd558268b5a
+   URL: http://127.0.0.1:60269/api/projects/ce560bc6-288b-4312-a443-99c5fd5bc99e
 ✅ Update Project - PASSED
 
 🔍 Testing Delete Project...
-   URL: http://127.0.0.1:58194/api/projects/2a87e403-2b3a-4572-b431-6dd558268b5a
+   URL: http://127.0.0.1:60269/api/projects/ce560bc6-288b-4312-a443-99c5fd5bc99e
 ✅ Delete Project - PASSED
 
 📰 Testing Blogs Management...
 
 🔍 Testing Get All Blogs...
-   URL: http://127.0.0.1:58194/api/blogs/admin/all
+   URL: http://127.0.0.1:60269/api/blogs/admin/all
 ✅ Get All Blogs - PASSED
 
 🔍 Testing Create Blog...
-   URL: http://127.0.0.1:58194/api/blogs/admin/create
+   URL: http://127.0.0.1:60269/api/blogs/admin/create
 ✅ Create Blog - PASSED
 
 🔍 Testing Update Blog...
-   URL: http://127.0.0.1:58194/api/blogs/admin/9251d8ff-f471-4402-919f-3a832a3acd90
+   URL: http://127.0.0.1:60269/api/blogs/admin/3177043a-4f6e-4ac2-ac19-676428673e9c
 ✅ Update Blog - PASSED
 
 🔍 Testing Delete Blog...
-   URL: http://127.0.0.1:58194/api/blogs/admin/9251d8ff-f471-4402-919f-3a832a3acd90
+   URL: http://127.0.0.1:60269/api/blogs/admin/3177043a-4f6e-4ac2-ac19-676428673e9c
 ✅ Delete Blog - PASSED
 
 💬 Testing Testimonials Management...
 
 🔍 Testing Get All Testimonials...
-   URL: http://127.0.0.1:58194/api/testimonials/admin/all
+   URL: http://127.0.0.1:60269/api/testimonials/admin/all
 ✅ Get All Testimonials - PASSED
 
 🔍 Testing Create Testimonial...
-   URL: http://127.0.0.1:58194/api/testimonials/admin/create
+   URL: http://127.0.0.1:60269/api/testimonials/admin/create
 ✅ Create Testimonial - PASSED
 
 🔍 Testing Update Testimonial...
-   URL: http://127.0.0.1:58194/api/testimonials/admin/75c54ebe-0ad8-4676-ac3c-615ed89e1f7b
+   URL: http://127.0.0.1:60269/api/testimonials/admin/a368e513-9dbd-431a-96ac-00a742335bad
 ✅ Update Testimonial - PASSED
 
 🔍 Testing Delete Testimonial...
-   URL: http://127.0.0.1:58194/api/testimonials/admin/75c54ebe-0ad8-4676-ac3c-615ed89e1f7b
+   URL: http://127.0.0.1:60269/api/testimonials/admin/a368e513-9dbd-431a-96ac-00a742335bad
 ✅ Delete Testimonial - PASSED
 
 📧 Testing Contacts Management...
 
 🔍 Testing Get All Contacts...
-   URL: http://127.0.0.1:58194/api/contacts/admin/all
+   URL: http://127.0.0.1:60269/api/contacts/admin/all
 ✅ Get All Contacts - PASSED
 
 🎯 Testing Skills Management...
 
 🔍 Testing Get All Skills...
-   URL: http://127.0.0.1:58194/api/skills
+   URL: http://127.0.0.1:60269/api/skills
 ✅ Get All Skills - PASSED
 
 🔍 Testing Create Skill...
-   URL: http://127.0.0.1:58194/api/skills
+   URL: http://127.0.0.1:60269/api/skills
 ✅ Create Skill - PASSED
 
 🔍 Testing Update Skill...
-   URL: http://127.0.0.1:58194/api/skills/889d68c9-a729-46c5-997b-6de8a5350c9e
+   URL: http://127.0.0.1:60269/api/skills/244d03b1-91b0-4698-b639-79117d1cfbb3
 ✅ Update Skill - PASSED
 
 🔍 Testing Delete Skill...
-   URL: http://127.0.0.1:58194/api/skills/889d68c9-a729-46c5-997b-6de8a5350c9e
+   URL: http://127.0.0.1:60269/api/skills/244d03b1-91b0-4698-b639-79117d1cfbb3
 ✅ Delete Skill - PASSED
 
 📝 Testing Notes Management...
 
 🔍 Testing Get All Notes...
-   URL: http://127.0.0.1:58194/api/notes
+   URL: http://127.0.0.1:60269/api/notes
 ✅ Get All Notes - PASSED
 
 🔍 Testing Create Note...
-   URL: http://127.0.0.1:58194/api/notes
+   URL: http://127.0.0.1:60269/api/notes
 ✅ Create Note - PASSED
 
 🔍 Testing Update Note...
-   URL: http://127.0.0.1:58194/api/notes/73c1fe75-8b49-4018-ab35-aae702a0a25a
+   URL: http://127.0.0.1:60269/api/notes/1aa4ef8f-57cd-4ce4-9fcb-c007bffe3e7f
 ✅ Update Note - PASSED
 
 🔍 Testing Delete Note...
-   URL: http://127.0.0.1:58194/api/notes/73c1fe75-8b49-4018-ab35-aae702a0a25a
+   URL: http://127.0.0.1:60269/api/notes/1aa4ef8f-57cd-4ce4-9fcb-c007bffe3e7f
 ✅ Delete Note - PASSED
 
 👥 Testing Admins Management...
 
 🔍 Testing Get All Admins...
-   URL: http://127.0.0.1:58194/api/admins/list
+   URL: http://127.0.0.1:60269/api/admins/list
 ✅ Get All Admins - PASSED
 
 ⚙️ Testing Settings Management...
 
 🔍 Testing Get Settings...
-   URL: http://127.0.0.1:58194/api/settings
+   URL: http://127.0.0.1:60269/api/settings
 ✅ Get Settings - PASSED
 
 🔍 Testing Update Settings...
-   URL: http://127.0.0.1:58194/api/settings
+   URL: http://127.0.0.1:60269/api/settings
 ✅ Update Settings - PASSED
 
 📅 Testing Booking Management...
 
 🔍 Testing Get Booking Settings...
-   URL: http://127.0.0.1:58194/api/booking-settings
+   URL: http://127.0.0.1:60269/api/booking-settings
 ✅ Get Booking Settings - PASSED
 
 🔍 Testing Get All Bookings...
-   URL: http://127.0.0.1:58194/api/bookings/admin/all
+   URL: http://127.0.0.1:60269/api/bookings/admin/all
 ✅ Get All Bookings - PASSED
 
 👤 Testing Client Management...
 
 🔍 Testing Get All Clients...
-   URL: http://127.0.0.1:58194/api/admin/clients
+   URL: http://127.0.0.1:60269/api/admin/clients
 ✅ Get All Clients - PASSED
 
 🔍 Testing Get Client Projects...
-   URL: http://127.0.0.1:58194/api/admin/client-projects
+   URL: http://127.0.0.1:60269/api/admin/client-projects
 ✅ Get Client Projects - PASSED
 
 ============================================================
@@ -195,62 +195,62 @@ Success Rate: 100.0%
 ======================================================================
 
 🔍 Testing Admin Login (evaluation_admin)...
-   URL: http://127.0.0.1:58194/api/admins/login
+   URL: http://127.0.0.1:60269/api/admins/login
 ✅ Admin Login (evaluation_admin) - PASSED
    🔑 Admin token obtained: eyJhbGciOiJIUzI1NiIs...
 
 👤 Testing Client Management...
 
 🔍 Testing Get All Clients...
-   URL: http://127.0.0.1:58194/api/admin/clients
+   URL: http://127.0.0.1:60269/api/admin/clients
 ✅ Get All Clients - PASSED
 
 🔍 Testing Create New Client...
-   URL: http://127.0.0.1:58194/api/admin/clients
+   URL: http://127.0.0.1:60269/api/admin/clients
 ✅ Create New Client - PASSED
-   📝 Created client ID: 553b74e0-a262-4137-97d3-58a6dd8dc5ab
+   📝 Created client ID: 84519797-74d6-42f2-b5fe-b0b40605f670
 
 🔍 Testing Get Client by ID...
-   URL: http://127.0.0.1:58194/api/admin/clients/553b74e0-a262-4137-97d3-58a6dd8dc5ab
+   URL: http://127.0.0.1:60269/api/admin/clients/84519797-74d6-42f2-b5fe-b0b40605f670
 ✅ Get Client by ID - PASSED
 
 🔍 Testing Update Client...
-   URL: http://127.0.0.1:58194/api/admin/clients/553b74e0-a262-4137-97d3-58a6dd8dc5ab
+   URL: http://127.0.0.1:60269/api/admin/clients/84519797-74d6-42f2-b5fe-b0b40605f670
 ✅ Update Client - PASSED
 
 📋 Testing Project Management...
 
 🔍 Testing Get All Client Projects...
-   URL: http://127.0.0.1:58194/api/admin/client-projects
+   URL: http://127.0.0.1:60269/api/admin/client-projects
 ✅ Get All Client Projects - PASSED
 
 🔍 Testing Create Client Project...
-   URL: http://127.0.0.1:58194/api/admin/client-projects
+   URL: http://127.0.0.1:60269/api/admin/client-projects
 ✅ Create Client Project - PASSED
-   📋 Created project ID: 4ba4223f-07f6-4d97-9c02-d1c78ff2d010
+   📋 Created project ID: 211e50dc-f73d-4484-8ee3-f93c30d9299a
 
 🔍 Testing Get Project by ID...
-   URL: http://127.0.0.1:58194/api/admin/client-projects/4ba4223f-07f6-4d97-9c02-d1c78ff2d010
+   URL: http://127.0.0.1:60269/api/admin/client-projects/211e50dc-f73d-4484-8ee3-f93c30d9299a
 ✅ Get Project by ID - PASSED
 
 🔍 Testing Update Client Project...
-   URL: http://127.0.0.1:58194/api/admin/client-projects/4ba4223f-07f6-4d97-9c02-d1c78ff2d010
+   URL: http://127.0.0.1:60269/api/admin/client-projects/211e50dc-f73d-4484-8ee3-f93c30d9299a
 ✅ Update Client Project - PASSED
 
 🏠 Testing Client Dashboard Access...
 
 🔍 Testing Client Login...
-   URL: http://127.0.0.1:58194/api/client/login
+   URL: http://127.0.0.1:60269/api/client/login
 ✅ Client Login - PASSED
 
 🧹 Cleaning up test data...
 
 🔍 Testing Delete Test Project...
-   URL: http://127.0.0.1:58194/api/admin/client-projects/4ba4223f-07f6-4d97-9c02-d1c78ff2d010
+   URL: http://127.0.0.1:60269/api/admin/client-projects/211e50dc-f73d-4484-8ee3-f93c30d9299a
 ✅ Delete Test Project - PASSED
 
 🔍 Testing Delete Test Client...
-   URL: http://127.0.0.1:58194/api/admin/clients/553b74e0-a262-4137-97d3-58a6dd8dc5ab
+   URL: http://127.0.0.1:60269/api/admin/clients/84519797-74d6-42f2-b5fe-b0b40605f670
 ✅ Delete Test Client - PASSED
 
 ======================================================================

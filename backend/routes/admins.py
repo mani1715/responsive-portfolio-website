@@ -503,8 +503,8 @@ async def get_security_overview(current_admin: dict = Depends(get_current_admin)
             "status": "Not verified",
             "evidence_type": "hosted_scope_unverified",
             "verification_scope": "Production edge hosting (Vercel / Render cloud console)",
-            "description": "Distributed rate-limiting across multi-worker deployments requires REDIS_URL; Vercel edge CSP requires cloud console audit.",
-            "evidence": "Requires cloud dashboard settings review and external penetration testing against deployed URLs",
+            "description": "Hosted edge headers checked via scripts/verify_hosted_headers.py; tightened CSP/headers pending Vercel dashboard redeployment from latest commit.",
+            "evidence": "scripts/verify_hosted_headers.py (live inspection confirmed edge CSP update pending deployment)",
             "last_verified": None,
             "is_live_check": False
         }

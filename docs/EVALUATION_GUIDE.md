@@ -7,7 +7,7 @@ This document provides an evidence map for evaluation against the rubric. Deploy
 | Area | Marks | Review evidence |
 | --- | ---: | --- |
 | Security | 35 | `THREATS.md`, `SECURITY_SETUP.md`; token realms, ownership checks, permission dependencies, uploads, URL validation, sanitization, cryptographic audit hash chaining, and public/admin security views |
-| Threat analysis and testing | 15 | Threat register; isolated test runner (`scripts/run_evaluation_tests.py`, 110 passed tests: 61 pytest + 37 admin CRUD + 12 client isolation); saved verification reports; rerun pip-audit and yarn audit |
+| Threat analysis and testing | 15 | Threat register; isolated test runner (`scripts/run_evaluation_tests.py`, 121 passed tests: 72 pytest + 37 admin CRUD + 12 client isolation); saved verification reports; rerun pip-audit and yarn audit |
 | Functionality | 15 | Public portfolio with search/filter/details/repaired deployed links; admin editing; client project workspace, milestones/tasks, files and communication |
 | AI usage and prompt documentation | 15 | `PROMPTS.md`: chronologically ordered prompts without timestamps; detailed implementation choices and corrected suggestions |
 | Engineering quality | 10 | Shared API/services, URL/image handling, explicit loading/error/empty states, bounded API pagination, reproducible tests (17 frontend tests passing, clean production build via `yarn build`) |

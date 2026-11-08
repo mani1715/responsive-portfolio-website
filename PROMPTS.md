@@ -2346,3 +2346,31 @@ The goal is to close the remaining security and deployment gaps while preserving
 - Run the project’s existing relevant test/build/audit commands after changes. Do not delete tests or weaken assertions to get a pass.
 - Finish with a table of changed files, exact commands/results, remaining advisories, live checks actually performed, and dashboard items still requiring my access.
 ```
+
+### C49 — Review and Correct Dependency Audit Baselines, Strict Live Header Verification, and Narrowed Gitleaks Allowlist
+
+```text
+Review and correct the audit and deployment-verification gaps in the current METECHQ main branch. Do not claim clean or verified results unless the command actually checked them.
+
+1. Fix scripts/check_dependency_audits.py
+- Run `yarn audit --groups dependencies --json` reliably on Ubuntu. Remove `shell=True` when passing an argument list, or use a correctly quoted command string.
+- Check the command exit status and require a valid audit summary in the output. Treat command failures, empty output, and unparsable output as policy failures, not zero vulnerabilities.
+- Compare results to explicit, documented baselines. Fail if advisory counts or severities rise above the accepted baseline, or if an unapproved vulnerable package appears.
+- Do not claim backend “0 critical” unless the chosen audit source actually provides severity data and the script parses it.
+- Add focused tests for successful output, command failure, missing summary, increased findings, and new vulnerable packages.
+
+2. Fix scripts/verify_hosted_headers.py
+- Return a non-zero exit code if any required header is missing or an endpoint cannot be reached.
+- Check expected header values as well as presence, including the CSP directives and HSTS policy appropriate to that hostname.
+- Clearly distinguish frontend headers, same-origin `/api/` proxy headers, and direct Render API headers.
+- Do not report a successful hosted verification unless the script was run against the live URLs after the Vercel redeploy.
+
+3. Tighten the Gitleaks allowlist
+- Avoid broad tests/ and docs/ allowlist paths. Narrow the allowlist strictly to the exact fixture files and documented dummy tokens that need it.
+- Keep full-history scanning in CI and do not print matched secret contents.
+
+4. Verify and document
+- Run backend tests, frontend tests, and both audits.
+- Update documentation and test counts.
+- Sync changes and prepare a clean commit.
+```

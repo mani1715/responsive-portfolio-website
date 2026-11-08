@@ -1,22 +1,26 @@
 title = "gitleaks config for METECHQ"
 
 [allowlist]
-description = "Allowlist for test fixtures, mock credentials, evaluation passwords, and documentation placeholders"
+description = "Narrow allowlist restricted strictly to specific fixture files and documented dummy placeholders"
 paths = [
-    '''(^|/)tests/''',
-    '''(^|/)docs/''',
-    '''(^|/)scripts/run_evaluation_tests\.py$''',
-    '''(^|/)\.env\.example$''',
-    '''(^|/)backend/config\.py$''',
-    '''(^|/)PROMPTS\.md$''',
-    '''(^|/)README\.md$''',
-    '''(^|/)SECURITY_SETUP\.md$''',
-    '''(^|/)THREATS\.md$'''
+    '''^tests/backend/backend_test\.py$''',
+    '''^tests/backend/test_comprehensive_security\.py$''',
+    '''^tests/backend/test_evaluation_security\.py$''',
+    '''^tests/backend/client_management_test\.py$''',
+    '''^scripts/run_evaluation_tests\.py$''',
+    '''^\.env\.example$''',
+    '''^backend/config\.py$''',
+    '''^docs/EVALUATION_GUIDE\.md$''',
+    '''^PROMPTS\.md$''',
+    '''^README\.md$''',
+    '''^SECURITY_SETUP\.md$''',
+    '''^THREATS\.md$'''
 ]
 regexes = [
     '''metechq-development-only-jwt-secret-key-minimum-32-chars-long''',
     '''your-secret-key-change-in-production''',
     '''replace-with-a-cryptographically-secure-random-key-at-least-32-chars''',
+    '''dummy-secret-key-for-testing-only-32-chars''',
     '''evaluation_admin''',
-    '''dummy-secret-key-for-testing-only-32-chars'''
+    '''Eval![A-Za-z0-9_-]+'''
 ]

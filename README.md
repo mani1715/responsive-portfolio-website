@@ -312,7 +312,7 @@ build
 Comprehensive automated test runner executes tests against an isolated ephemeral MongoDB database:
 
 ```bash
-# 1. Full isolated backend test runner (110 passed: 61 pytest + 37 admin CRUD + 12 client isolation)
+# 1. Full isolated backend test runner (121 passed: 72 pytest + 37 admin CRUD + 12 client isolation)
 python scripts/run_evaluation_tests.py
 
 # 2. Frontend regression test suite (17 passed)

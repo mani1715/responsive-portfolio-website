@@ -2,10 +2,10 @@
 
 | Check | Result | Evidence |
 | --- | --- | --- |
-| Security / API regression pytest | 61 passed | `docs/verification/backend-results.txt`, `backend-tests.xml` |
+| Security / API regression pytest | 72 passed | `docs/verification/backend-results.txt`, `backend-tests.xml` |
 | General admin/API CRUD | 37 passed | `docs/verification/backend-results.txt` |
 | Client management workflow | 12 passed | `docs/verification/backend-results.txt` |
-| Total backend tests | 110 passed, 0 failed | Ephemeral test runner (`scripts/run_evaluation_tests.py`) |
+| Total backend tests | 121 passed, 0 failed | Ephemeral test runner (`scripts/run_evaluation_tests.py`) |
 | Frontend regression tests | 17 passed, 5 suites | `frontend/src/utils/*.test.js`, `frontend/src/services/*.test.js`, `frontend/src/pages/ClientDashboard.test.jsx` |
 | Production compilation | Passed (clean build, 322.81 kB gzip) | `frontend/build/` via `yarn build` |
 | Secret Scanning (Full History) | Clean (0 leaks, 0 credentials) | Gitleaks scan over full Git history (`fetch-depth: 0`) with `.gitleaks.toml` |
