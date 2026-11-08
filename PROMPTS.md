@@ -2217,3 +2217,83 @@ Report the code changes, test results, and any remaining issues.
 ```text
 Ask Antigravity to rerun the backend checks after the setup issue clears, rerun both dependency audits against the committed files, update the report with those exact results, and correct the badge wording. Once the updated commit has passing backend and frontend checks, the handover will be much more reliable.
 ```
+
+
+### C47 - Deployed frontend production hardening, container unprivileged execution, tightened CSP, and separated runtime dependencies
+
+```text
+Continue from the current METECHQ main branch, currently expected to include commit f03ef74. First check the actual branch and files; do not assume this prompt describes the latest state.
+
+GOAL
+Finish the remaining production security work for the deployed METECHQ frontend:
+https://frontend-iota-mauve-57.vercel.app/
+
+The project is a React frontend under /frontend and a FastAPI/MongoDB backend deployed on Render. Security tests and CI have passed, but the repository documents remaining dependency findings and hosted settings that have not been independently verified.
+
+Be accurate. Never mark a control “Verified” just because code exists. Never claim the live site is secure, vulnerability-free, encrypted, or fully verified unless you performed the relevant check and have evidence.
+
+KNOWN REPOSITORY DETAILS TO CONFIRM
+- frontend/vercel.json currently includes an API rewrite to https://metechq.onrender.com/api, an SPA fallback, and security headers including CSP.
+- The deployed frontend helper uses same-origin /api on non-localhost domains. Verify whether the Vercel API rewrite is the intended route. Do not configure a frontend API URL that bypasses it without a reason.
+- backend/utils/rate_limiter.py supports Redis through REDIS_URL but can fall back to in-memory limiting.
+- Backend configuration reads ENVIRONMENT, MONGODB_URI, DB_NAME, JWT_SECRET_KEY, CLIENT_JWT_SECRET, CORS_ORIGINS, TRUST_PROXY, UPLOAD_DIR, REDIS_URL, and bootstrap variables.
+- The root Dockerfile currently installs backend/requirements.txt. Inspect whether that file includes development/test tools and whether the container runs as root.
+- The latest committed verification report lists 40 frontend production dependency advisories, 41 for the full frontend graph, and 102 backend advisories. Rerun audits; do not copy these counts forward if they change.
+- Hosted TLS/header checks, Redis-backed multi-worker rate limiting, proxy trust, and durable upload storage have been listed as unverified.
+
+PHASE 1 — REPO-SIDE HARDENING
+1. Inspect the current Vercel config, backend configuration, Dockerfile, dependency manifests, CI workflow, upload handling, and security tests before editing.
+2. Preserve the existing Vercel API rewrite and SPA fallback unless tests show they are wrong.
+3. Review and tighten the existing CSP using the app’s actual scripts, styles, images, fonts, API calls, and embeds. Remove unnecessarily broad source allowances. Avoid weakening script protections to silence browser errors. Test the public pages, admin pages, client portal, and demos against the policy.
+4. Add appropriate Strict-Transport-Security, Referrer-Policy, and Permissions-Policy headers where they belong. Do not add HSTS includeSubDomains or preload unless every relevant domain is ready for it. Remove obsolete headers if they provide no useful protection.
+5. Ensure API CORS accepts only the deployed frontend origin and any confirmed production domains. Production must reject wildcard origins and development localhost origins.
+6. Review forwarded-header handling. Do not trust arbitrary X-Forwarded-For, X-Forwarded-Host, or X-Forwarded-Proto values. Use only a documented, supported Render proxy configuration. Do not invent Render IP ranges. If trustworthy client-IP extraction cannot be established, document the limitation and keep the setting unverified.
+7. Make Redis rate limiting work across workers when REDIS_URL is configured. Clearly report degraded/in-memory fallback if Redis is unavailable; do not label it distributed in that state. Add regression tests for the configured and failure behavior.
+8. Separate backend runtime dependencies from development/test dependencies if the production image currently installs both. Update the Dockerfile to install only runtime dependencies and use a non-root runtime user where compatible. Verify upload directory ownership and writable permissions.
+9. Keep client uploads private and authorized. Support a persistent Render disk or a properly configured private object store. Do not change, delete, or migrate production uploads without a backup and an explicit migration plan. Do not claim encryption at rest unless the provider configuration proves it.
+10. Re-run yarn audit against frontend/yarn.lock and pip-audit against the actual production dependency set and the development/test set separately. Review advisory paths and reachable use. Make safe compatible updates in groups and run regression tests after each group. Do not use force upgrades or suppress audit findings to make the count look lower. If CRA migration to Vite is needed to remove build-toolchain findings, do it as a controlled migration, preserving routes, API proxying, environment variables, tests, assets, and the production build.
+11. Add or update CI checks for regression tests, builds, secret scanning, and dependency audits. Keep existing findings visible; distinguish a clean check from an audit that completed and found issues. Never print secrets in logs or artifacts.
+
+PHASE 2 — PREPARE THE VERCEL AND RENDER CONFIGURATION
+The code agent may not have access to my provider dashboards. Do not claim dashboard changes were made unless you actually had authorized access and verified the settings.
+
+For Vercel:
+- Confirm the project’s actual Root Directory. If it is /frontend, make sure the Vercel config is in that deployed root.
+- Verify build/install/output settings against the current frontend scripts and yarn.lock.
+- Confirm the production app uses /api and the rewrite reaches the Render API correctly.
+- Provide exact dashboard steps for deploying the header changes and verifying them.
+- Test the deployed frontend headers with curl -I or an equivalent response-header check. Check the homepage, /security, and a client-side route. Record actual headers and any CSP violations. If the hosted URL cannot be reached, mark this “Not verified” and provide commands I can run.
+
+For Render:
+- Provide an exact Environment settings checklist for the existing API service.
+- Include ENVIRONMENT=production, DB_NAME=metechq, exact CORS_ORIGINS for the deployed frontend, and the existing MONGODB_URI as a secret field.
+- Require distinct randomly generated values for JWT_SECRET_KEY and CLIENT_JWT_SECRET (32+ random bytes). Never generate or print the actual secrets in source, logs, or this report. Tell me to enter them directly in Render.
+- Keep Render’s assigned PORT; do not hard-code it.
+- Set REDIS_URL only after a Redis service has been provisioned and connectivity verified.
+- Give the persistent disk mount path and matching UPLOAD_DIR only after confirming the selected storage configuration and write permissions.
+- Explain how to remove INIT_SUPERADMIN_PASSWORD after the initial super-admin is provisioned.
+- Do not enable TRUST_PROXY until the trusted-proxy behavior is confirmed from current official Render documentation and tested safely.
+
+For MongoDB Atlas and account security:
+- Give a checklist to verify MFA, backups, encryption-at-rest settings, database user least privilege, and network access restrictions.
+- Do not recommend 0.0.0.0/0 as a permanent IP allowlist. If Render egress cannot be restricted with the current plan, document that limitation and the safer available option.
+- Recommend MFA for GitHub, Vercel, Render, and MongoDB Atlas.
+- If a secret is found in Git history, do not print it. Identify the affected variable/file and instruct me to rotate it in the provider.
+
+PHASE 3 — VERIFY WITHOUT DAMAGING PRODUCTION
+1. Run the existing isolated backend evaluation suite, frontend tests, production build, dependency audits, and secret scan.
+2. Use read-only hosted checks where possible. Do not use production admin credentials, create or delete production records, upload test files to production, alter production data, or rotate production secrets.
+3. Use staging or local isolated resources for authenticated security tests.
+4. Check the live frontend and API responses for TLS redirects, CORS behavior, security headers, API health, and the deployed commit. If any check cannot be performed, label it “Not verified” and say why.
+5. Keep the public Security & Privacy page and Admin Security Center consistent with verified results and remaining limitations.
+
+FINAL REPORT
+Provide:
+- Files changed and why.
+- Exact test, build, audit, and secret-scan commands and their outcomes.
+- Current frontend and backend audit counts, separated into runtime and development/test findings.
+- Exact Vercel, Render, and MongoDB dashboard steps still requiring me.
+- Hosted checks actually performed, with URLs and observed outcomes.
+- Any remaining high/critical findings and risks.
+- Do not claim deployment, dashboard configuration, secret rotation, persistent storage, Redis operation, or hosted verification unless it was actually completed and confirmed.
+```

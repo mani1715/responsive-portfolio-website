@@ -374,6 +374,27 @@ async def get_security_overview(current_admin: dict = Depends(get_current_admin)
 
     live_now = datetime.utcnow().isoformat()
 
+    # Rate Limiting Mode & Health
+    rl = login_rate_limiter
+    if getattr(rl, "is_distributed", False):
+        rate_limit_status = "Verified"
+        rate_limit_scope = "Distributed sliding-window limiter (Redis-backed)"
+        rate_limit_desc = "Redis-backed sliding-window limiter active across multi-worker cluster (5 attempts / 5 min)."
+        rate_limit_evidence = "backend/utils/rate_limiter.py (Redis cluster connectivity verified live)"
+    elif getattr(rl, "status", "") == "degraded_in_memory_fallback":
+        rate_limit_status = "Needs attention"
+        rate_limit_scope = "Degraded single-process limiter (Redis fallback)"
+        rate_limit_desc = f"REDIS_URL is configured but unreachable ({getattr(rl, 'last_error', 'outage')}); fallen back to local in-memory limiting."
+        rate_limit_evidence = "backend/utils/rate_limiter.py (degraded in-memory fallback active; multi-worker sync lost)"
+    else:
+        rate_limit_status = "Verified" if not IS_PRODUCTION else "Needs attention"
+        rate_limit_scope = "Single-process in-memory limiter"
+        rate_limit_desc = (
+            "Sliding-window limiter active in process memory. Verified for single-worker runtime; "
+            "production multi-worker deployment requires REDIS_URL."
+        )
+        rate_limit_evidence = "backend/utils/rate_limiter.py (process-local limiter active; REDIS_URL unconfigured)"
+
     controls = [
         {
             "id": "auth_separation",
@@ -415,11 +436,11 @@ async def get_security_overview(current_admin: dict = Depends(get_current_admin)
             "id": "rate_limiting",
             "name": "Brute-Force Rate Limiting",
             "category": "Defense in Depth",
-            "status": "Verified",
+            "status": rate_limit_status,
             "evidence_type": "live_runtime_check",
-            "verification_scope": "In-memory sliding-window limiter (single process)",
-            "description": "Sliding-window limiter active on admin authentication and client login endpoints (5 attempts / 5 min).",
-            "evidence": "backend/utils/rate_limiter.py (process-local memory limiter verified mounted; multi-worker cluster requires REDIS_URL)",
+            "verification_scope": rate_limit_scope,
+            "description": rate_limit_desc,
+            "evidence": rate_limit_evidence,
             "last_verified": live_now,
             "is_live_check": True
         },
@@ -430,7 +451,7 @@ async def get_security_overview(current_admin: dict = Depends(get_current_admin)
             "status": "Verified",
             "evidence_type": "live_runtime_check",
             "verification_scope": "FastAPI middleware pipeline",
-            "description": "X-Content-Type-Options: nosniff, X-Frame-Options: SAMEORIGIN, strict CORS origin checks.",
+            "description": "X-Content-Type-Options: nosniff, X-Frame-Options: DENY, HSTS, Referrer-Policy, strict CORS origin checks.",
             "evidence": "backend/server.py (SecurityHeadersMiddleware & CORS origin enforcement loaded in FastAPI pipeline)",
             "last_verified": live_now,
             "is_live_check": True
@@ -470,8 +491,8 @@ async def get_security_overview(current_admin: dict = Depends(get_current_admin)
             "status": "Needs attention",
             "evidence_type": "dependency_audit_report",
             "verification_scope": "backend/requirements.txt (pip-audit)",
-            "description": "pip-audit reports 102 advisories across 18 pinned packages (multipart resolved; runtime compatibility updated).",
-            "evidence": "backend/requirements.txt (recorded audit report: 18 pinned packages require staged major migration)",
+            "description": "pip-audit reports 96 advisories across 16 production runtime packages (dev tools black & pytest separated into requirements-dev.txt).",
+            "evidence": "backend/requirements.txt (runtime audit report: 16 pinned packages require staged major migration)",
             "last_verified": None,
             "is_live_check": False
         },

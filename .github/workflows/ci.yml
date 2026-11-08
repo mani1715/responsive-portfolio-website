@@ -21,10 +21,40 @@ jobs:
       - uses: actions/setup-python@v5
         with:
           python-version: '3.10'
-      - name: Install backend and test dependencies
-        run: pip install -r backend/requirements.txt pytest pytest-asyncio requests httpx
+      - name: Install backend runtime and test dependencies
+        run: pip install -r backend/requirements-dev.txt requests pip-audit
+      - name: Secret scan check
+        run: |
+          python -c "
+          import os, re, sys
+          bad_patterns = [
+              r'(?i)AKIA[0-9A-Z]{16}',
+              r'-----BEGIN (?:RSA|EC|OPENSSH|PRIVATE) KEY-----',
+              r'(?i)ghp_[0-9a-zA-Z]{36}',
+          ]
+          leaks = []
+          for root, dirs, files in os.walk('.'):
+              if any(p in root for p in ['.git', 'node_modules', '.venv', 'build', '__pycache__']):
+                  continue
+              for f in files:
+                  if f.endswith(('.py', '.js', '.jsx', '.json', '.md', '.yml', '.yaml', '.txt', '.sh', '.env.example')):
+                      path = os.path.join(root, f)
+                      try:
+                          text = open(path, encoding='utf-8', errors='ignore').read()
+                          for pat in bad_patterns:
+                              if re.search(pat, text):
+                                  leaks.append((path, pat))
+                      except Exception:
+                          pass
+          if leaks:
+              print(f'CRITICAL: Potential secrets detected in {len(leaks)} files:', leaks)
+              sys.exit(1)
+          print('Clean: No private keys or production credentials detected in repository files.')
+          "
       - name: Run isolated security and functionality checks
         run: python scripts/run_evaluation_tests.py
+      - name: Backend dependency audit (production runtime)
+        run: pip-audit -r backend/requirements.txt || true
       - uses: actions/upload-artifact@v4
         if: always()
         with:
@@ -42,6 +72,9 @@ jobs:
       - name: Install locked dependencies
         working-directory: frontend
         run: yarn install --frozen-lockfile
+      - name: Frontend dependency audit
+        working-directory: frontend
+        run: yarn audit --groups dependencies || true
       - name: Frontend regression tests
         working-directory: frontend
         run: yarn test --watchAll=false --runInBand

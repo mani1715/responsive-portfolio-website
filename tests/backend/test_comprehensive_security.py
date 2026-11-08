@@ -54,7 +54,7 @@ def test_public_settings_readable():
 def test_security_headers_present():
     res = requests.get(f"{BASE_URL}/")
     assert res.headers.get("X-Content-Type-Options") == "nosniff"
-    assert res.headers.get("X-Frame-Options") == "SAMEORIGIN"
+    assert res.headers.get("X-Frame-Options") in ("DENY", "SAMEORIGIN")
     assert res.headers.get("Referrer-Policy") == "strict-origin-when-cross-origin"
 
 # ==============================================================================

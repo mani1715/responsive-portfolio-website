@@ -101,33 +101,42 @@ class HybridRateLimiter:
     and falls back gracefully to InMemoryRateLimiter on Redis outages.
     """
     def __init__(self, redis_url: Optional[str] = None):
-        self._redis_url = redis_url or os.getenv("REDIS_URL", "").strip()
+        self._redis_url = redis_url if redis_url is not None else os.getenv("REDIS_URL", "").strip()
         self._in_memory = InMemoryRateLimiter()
         self._redis_client = None
         self._lua_script = None
         self.is_distributed = False
+        self.status = "in_memory_unconfigured"
+        self.last_error = None
         
         if self._redis_url:
-            try:
-                import redis
-                client = redis.Redis.from_url(self._redis_url, socket_timeout=2.0)
-                client.ping()
-                self._redis_client = client
-                self._lua_script = client.register_script(LUA_SLIDING_WINDOW)
-                self.is_distributed = True
-                logger.info("✅ Distributed Redis rate limiter initialized successfully.")
-            except Exception as e:
-                logger.warning(
-                    f"⚠️ Failed to connect to Redis at {self._redis_url}: {e}. "
-                    "Outage behavior: Falling back to single-process in-memory rate limiting."
-                )
-                self._redis_client = None
-                self.is_distributed = False
+            self._connect()
         else:
             logger.info(
                 "ℹ️  REDIS_URL not set. Running in-memory rate limiter "
                 "(scope: single worker process; not synchronized across multiple workers/nodes)."
             )
+
+    def _connect(self):
+        try:
+            import redis
+            client = redis.Redis.from_url(self._redis_url, socket_timeout=2.0)
+            client.ping()
+            self._redis_client = client
+            self._lua_script = client.register_script(LUA_SLIDING_WINDOW)
+            self.is_distributed = True
+            self.status = "distributed_redis"
+            self.last_error = None
+            logger.info("✅ Distributed Redis rate limiter initialized successfully.")
+        except Exception as e:
+            logger.warning(
+                f"⚠️ Failed to connect to Redis at {self._redis_url}: {e}. "
+                "Outage behavior: Falling back to single-process in-memory rate limiting."
+            )
+            self._redis_client = None
+            self.is_distributed = False
+            self.status = "degraded_in_memory_fallback"
+            self.last_error = str(e)
 
     def check_and_record(self, key: str, max_attempts: int, window_seconds: int) -> Tuple[bool, int]:
         """
@@ -144,6 +153,9 @@ class HybridRateLimiter:
                 return allowed, retry_after
             except Exception as e:
                 logger.warning(f"Redis rate limiting failed ({e}). Outage fallback: using in-memory.")
+                self.is_distributed = False
+                self.status = "degraded_in_memory_fallback"
+                self.last_error = str(e)
                 return self._in_memory.check_and_record(key, max_attempts, window_seconds)
         
         return self._in_memory.check_and_record(key, max_attempts, window_seconds)

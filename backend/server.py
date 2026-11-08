@@ -72,12 +72,8 @@ class ProxyHeaderMiddleware(BaseHTTPMiddleware):
     async def dispatch(self, request: Request, call_next):
         if TRUST_PROXY:
             forwarded_proto = request.headers.get("X-Forwarded-Proto")
-            if forwarded_proto:
-                request.scope["scheme"] = forwarded_proto
-
-            forwarded_host = request.headers.get("X-Forwarded-Host")
-            if forwarded_host:
-                request.scope["server"] = (forwarded_host, None)
+            if forwarded_proto and forwarded_proto.lower() in ("http", "https"):
+                request.scope["scheme"] = forwarded_proto.lower()
 
         return await call_next(request)
 
@@ -85,10 +81,10 @@ class SecurityHeadersMiddleware(BaseHTTPMiddleware):
     async def dispatch(self, request: Request, call_next):
         response = await call_next(request)
         response.headers["X-Content-Type-Options"] = "nosniff"
-        response.headers["X-Frame-Options"] = "SAMEORIGIN"
-        response.headers["X-XSS-Protection"] = "1; mode=block"
+        response.headers["X-Frame-Options"] = "DENY"
         response.headers["Referrer-Policy"] = "strict-origin-when-cross-origin"
-        response.headers["Permissions-Policy"] = "geolocation=(), camera=(), microphone=()"
+        response.headers["Permissions-Policy"] = "geolocation=(), camera=(), microphone=(), payment=()"
+        response.headers["Strict-Transport-Security"] = "max-age=31536000"
         return response
 
 app.add_middleware(SecurityHeadersMiddleware)

@@ -347,3 +347,56 @@ async def test_audit_chain_mixed_legacy_collection_cannot_show_fully_verified(mo
     assert res["fully_verified_collection"] is False
     assert res["status"] == "legacy_mixed_chain"
     assert "Collection cannot be labeled fully verified" in res["message"]
+
+
+def test_hybrid_rate_limiter_configured_and_failure_behavior(monkeypatch):
+    """
+    Verifies HybridRateLimiter under all three operating states:
+    1. Unconfigured REDIS_URL -> in_memory_unconfigured (not labeled distributed).
+    2. Configured REDIS_URL with live Redis -> distributed_redis (is_distributed=True).
+    3. Unreachable / failing Redis -> degraded_in_memory_fallback (graceful in-memory fallback, never labeled distributed).
+    """
+    from utils.rate_limiter import HybridRateLimiter
+    from unittest.mock import MagicMock
+
+    # State 1: Unconfigured REDIS_URL
+    limiter_none = HybridRateLimiter(redis_url="")
+    assert limiter_none.is_distributed is False
+    assert limiter_none.status == "in_memory_unconfigured"
+
+    # State 2: Configured live Redis (mocked)
+    mock_redis_module = MagicMock()
+    mock_client = MagicMock()
+    mock_script = MagicMock()
+
+    mock_client.ping.return_value = True
+    mock_client.register_script.return_value = mock_script
+    mock_redis_module.Redis.from_url.return_value = mock_client
+    monkeypatch.setattr("utils.rate_limiter.redis", mock_redis_module, raising=False)
+    import sys
+    monkeypatch.setitem(sys.modules, "redis", mock_redis_module)
+
+    # First call via Lua script returns allowed [1, 0]
+    mock_script.return_value = [1, 0]
+    limiter_redis = HybridRateLimiter(redis_url="redis://mock-redis.internal:6379/0")
+    assert limiter_redis.is_distributed is True
+    assert limiter_redis.status == "distributed_redis"
+
+    allowed, retry = limiter_redis.check_and_record("worker_key_1", max_attempts=5, window_seconds=60)
+    assert allowed is True
+    assert retry == 0
+
+    # Second call returns blocked [0, 42]
+    mock_script.return_value = [0, 42]
+    allowed, retry = limiter_redis.check_and_record("worker_key_1", max_attempts=5, window_seconds=60)
+    assert allowed is False
+    assert retry == 42
+
+    # State 3: Runtime Redis outage during active operation
+    mock_script.side_effect = Exception("Connection closed by peer")
+    allowed, retry = limiter_redis.check_and_record("worker_key_fallback", max_attempts=2, window_seconds=60)
+    # Must gracefully fall back to in-memory, update status, and remain functional
+    assert limiter_redis.is_distributed is False
+    assert limiter_redis.status == "degraded_in_memory_fallback"
+    assert "Connection closed" in limiter_redis.last_error
+    assert allowed is True  # First in-memory attempt allowed

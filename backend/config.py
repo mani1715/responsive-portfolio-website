@@ -129,6 +129,8 @@ def validate_config():
             errors.append("Admin and client JWT secrets must be different.")
         if not CORS_ORIGINS_RAW or '*' in CORS_ORIGINS_RAW:
             errors.append("Production CORS must list explicit trusted origins.")
+        elif any("localhost" in orig.lower() or "127.0.0.1" in orig for orig in CORS_ORIGINS_RAW.split(",")):
+            errors.append("Production CORS must not include localhost or development origins.")
         if CLIENT_JWT_SECRET and len(CLIENT_JWT_SECRET) < 32:
             errors.append("CLIENT_JWT_SECRET must be at least 32 characters long in production.")
         if CLIENT_JWT_SECRET and CLIENT_JWT_SECRET.lower() in INSECURE_SECRETS:
