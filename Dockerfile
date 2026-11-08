@@ -28,7 +28,8 @@ USER appuser
 
 EXPOSE 8000
 
+# Dynamic health check matching runtime ${PORT:-8000}
 HEALTHCHECK --interval=30s --timeout=5s --start-period=10s --retries=3 \
-  CMD curl -f http://localhost:8000/api/ || exit 1
+  CMD python -c "import os, urllib.request; port = os.getenv('PORT', '8000'); urllib.request.urlopen(f'http://127.0.0.1:{port}/api/', timeout=4)" || exit 1
 
 CMD ["sh", "-c", "python -m uvicorn server:app --host 0.0.0.0 --port ${PORT:-8000}"]

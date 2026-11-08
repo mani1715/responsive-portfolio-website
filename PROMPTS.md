@@ -2297,3 +2297,52 @@ Provide:
 - Any remaining high/critical findings and risks.
 - Do not claim deployment, dashboard configuration, secret rotation, persistent storage, Redis operation, or hosted verification unless it was actually completed and confirmed.
 ```
+
+
+### C48 - Close remaining security and deployment gaps, configure Gitleaks history scanning, dynamic Docker healthcheck, and audit baselines
+
+```text
+Continue the METECHQ security remediation from the current repository state on main. First inspect the actual code, configuration, CI workflow, and documentation. Treat the latest commit and its passing CI as evidence, but do not assume the deployment or any dashboard settings are verified.
+
+The goal is to close the remaining security and deployment gaps while preserving the current site’s functionality.
+
+1. CI dependency audits
+- Keep audit output visible, but stop marking an audit step as a clean pass when it finds advisories.
+- Make CI clearly distinguish “audit completed with findings” from “audit clean.”
+- Add a documented, practical failure threshold for newly introduced critical/high production-runtime findings. Do not blindly upgrade pinned packages or suppress current findings.
+- Confirm whether each advisory is in production runtime code or only build/test tooling; document the evidence and limits.
+
+2. Secret scanning
+- Replace or supplement the hand-written regex scan with a maintained secret scanner such as Gitleaks.
+- Scan the complete Git history in CI as well as the checked-out files.
+- Configure narrowly justified false-positive handling; never print secret values in logs.
+- Document that rotation is required if an actual credential was committed.
+
+3. Docker health check and runtime
+- Resolve the mismatch between the app’s ${PORT:-8000} listener and the fixed port used by Docker HEALTHCHECK.
+- Ensure the container remains non-root, runtime-only, and able to write only to required upload/temp paths.
+- Check the image’s startup behavior with production configuration and avoid weakening existing validation.
+
+4. Production security headers
+- Compare frontend/vercel.json, backend middleware, and the reported live headers.
+- Ensure the policy is internally consistent. Do not claim a header is live until verified from the deployed URL.
+- Confirm whether HSTS should be one year or two years, and whether includeSubDomains/preload are actually safe for every affected subdomain before enabling them.
+- Review CSP against actual app assets and integrations. Avoid adding broad wildcard sources or unsafe script permissions just to silence errors.
+- Add reproducible commands or a small verification procedure for checking response headers on the deployed frontend and API.
+
+5. Hosted configuration checklist
+- Produce a concise, exact dashboard checklist for Vercel and Render: correct repository/root directory, latest deployment commit, production CORS origins, separate strong JWT secrets, MongoDB URI, proxy trust setting, Redis URL if using multiple workers/instances, and persistent upload storage.
+- Do not request, print, or commit secret values.
+- Mark each hosted item “verified” only when there is evidence from the live service or provider settings. Otherwise mark it “needs dashboard verification.”
+- Include MongoDB access restrictions, MFA, and backups in the checklist.
+
+6. Session and rate-limit boundaries
+- Inspect token storage and document whether browser tokens are accessible to JavaScript. If they are, assess a secure HttpOnly/Secure/SameSite cookie migration without breaking login flows; implement only with tests and a clear rollout plan.
+- Confirm which limiter mode is active and whether it is shared across workers. Never label an in-memory fallback as distributed protection.
+
+7. Evidence and final report
+- Update the security documentation and Security Center so findings, test evidence, dependency audit evidence, and hosted verification are attributed accurately.
+- Do not claim “fully secure,” “zero vulnerabilities,” or hosted validation based only on local tests.
+- Run the project’s existing relevant test/build/audit commands after changes. Do not delete tests or weaken assertions to get a pass.
+- Finish with a table of changed files, exact commands/results, remaining advisories, live checks actually performed, and dashboard items still requiring my access.
+```

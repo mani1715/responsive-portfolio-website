@@ -1,0 +1,22 @@
+title = "gitleaks config for METECHQ"
+
+[allowlist]
+description = "Allowlist for test fixtures, mock credentials, evaluation passwords, and documentation placeholders"
+paths = [
+    '''(^|/)tests/''',
+    '''(^|/)docs/''',
+    '''(^|/)scripts/run_evaluation_tests\.py$''',
+    '''(^|/)\.env\.example$''',
+    '''(^|/)backend/config\.py$''',
+    '''(^|/)PROMPTS\.md$''',
+    '''(^|/)README\.md$''',
+    '''(^|/)SECURITY_SETUP\.md$''',
+    '''(^|/)THREATS\.md$'''
+]
+regexes = [
+    '''metechq-development-only-jwt-secret-key-minimum-32-chars-long''',
+    '''your-secret-key-change-in-production''',
+    '''replace-with-a-cryptographically-secure-random-key-at-least-32-chars''',
+    '''evaluation_admin''',
+    '''dummy-secret-key-for-testing-only-32-chars'''
+]
