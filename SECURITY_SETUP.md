@@ -18,7 +18,7 @@ METECHQ implements defense-in-depth across the application lifecycle:
    - In `ENVIRONMENT=production`, the application refuses to start if placeholder or default secrets are detected.
    - Minimum secret length is enforced (>= 32 characters).
 
-3. **Strict RBAC & Resource Ownership (Zero IDOR)**:
+3. **Strict RBAC & Server-Side Client Tenant Isolation (IDOR Mitigation)**:
    - All administrative routes (`/admin/*`, `/projects`, `/services`, `/contacts/admin/*`, `/pages`, `/content`, `/settings`, `/admins`) require authenticated admin tokens with valid claims.
    - Client portal endpoints enforce tenant isolation: clients can only query and mutate projects, documents, and tasks assigned to their specific `client_id`.
    - Super-admin authorization (`require_super_admin`) is strictly required for admin user provisioning, audit log retrieval, and chain integrity verification.
@@ -93,7 +93,7 @@ openssl rand -hex 32
 Run the automated security runner to execute tests against an isolated ephemeral database:
 
 ```bash
-# Full isolated runner (59 pytest regression + 37 admin CRUD + 12 client management = 108 total passed)
+# Full isolated runner (72 pytest regression + 37 admin CRUD + 12 client management = 121 total passed)
 python scripts/run_evaluation_tests.py
 
 # Frontend regression test suite (17 passed)
@@ -111,17 +111,25 @@ python -m pip_audit -r backend/requirements.txt
 
 ---
 
-## 5. Security Transparency Views
+## 5. Security Transparency Views & Verification Tiers
 
+Controls across documentation, `/security`, and the admin Security Center are classified into five standard verification tiers:
+1. **Verified by automated test**: Validated via isolated regression test suites (`tests/backend/test_comprehensive_security.py`, `tests/backend/client_management_test.py`, `scripts/run_evaluation_tests.py`).
+2. **Verified by CI**: Validated automatically in the GitHub Actions workflow on every push (`.github/workflows/ci.yml`).
+3. **Verified against live deployment**: Inspected directly against production URLs (`scripts/verify_hosted_headers.py`).
+4. **Documented but not verified**: Architecture decisions, intake channels, or manual operational processes documented honestly.
+5. **Needs dashboard action**: Hosted settings requiring cloud console interaction (Vercel / Render / MongoDB Atlas).
+
+### User Interfaces
 1. **Public "Security & Privacy" Page (`/security`)**:
    - Plain-language explanation of signed JWT authentication realms, client project data isolation, file integrity controls, and responsible disclosure intake.
+   - Transparently discloses `localStorage` JavaScript token exposure and unkeyed SHA-256 audit boundaries.
    - Reports verified mechanisms without marketing hype, database-proof claims, or false certification claims.
 
 2. **Admin-Only "Security Center" (`/admin/security`)**:
    - Accessible only by authorized administrators.
    - Backed by authenticated endpoint `GET /api/admins/security-overview`.
-   - Displays live status rows (`Verified`, `Needs attention`, `Not verified`) with linked code files, evidence types, verification scopes, and test references.
-   - Performs real-time cryptographic audit chain integrity checks with complete vs truncated scan detection.
+   - Displays real-time cryptographic audit chain integrity checks, live JWT secret comparison, and dependency audit counts.
 
 ---
 

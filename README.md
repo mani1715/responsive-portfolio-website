@@ -33,54 +33,54 @@ Visitors can:
 
 ---
 
-## 2️⃣ Admin Management Dashboard
+## 2️⃣ Client Portal Workspace
+
+The client portal provides a dedicated, tenant-isolated workspace for clients to track project progress and collaborate with the agency team.
+
+Clients can:
+
+* View project progress and deliverables
+* Track milestones and phased schedules
+* Monitor task checklists and statuses
+* View project budget summaries and payment terms
+* Securely download authorized project deliverables (tenant-token validated)
+* Comment on project milestones
+* Review audit activity history
+* Communicate through real-time per-project chat
+
+This improves **transparency and communication between developers and clients**.
+
+---
+
+## 3️⃣ Admin Management Dashboard
 
 The admin dashboard provides a **centralized control panel** for managing the entire platform.
 
 Admins can:
 
 * View platform analytics
-* Manage portfolio projects
+* Manage portfolio projects and showcase case studies
 * Publish and edit blog articles
-* Manage clients and their projects
+* Manage clients and provision client project workspaces
 * Track project milestones and tasks
-* Manage testimonials
+* Manage testimonials and reviews
 * Manage newsletter subscribers
-* Configure platform settings
-* Upload and manage files
+* Configure platform settings and editorial copy
+* Upload and manage files with magic-byte validation
 
 This makes the platform suitable for **freelancers, agencies, and service-based businesses**.
 
 ---
 
-## 4️⃣ Public Security & Privacy Page (`/security`)
+## 4️⃣ Public Security & Privacy Page (/security)
 
-A public-facing security transparency page explaining authentication realm separation, tenant project isolation, file security, and responsible disclosure contact (`security@metechq.com`).
-
----
-
-## 5️⃣ Admin Security Center (`/admin/security`)
-
-A restricted management portal view backed by authenticated endpoint `GET /api/admins/security-overview`. It presents verified status rows (`Verified`, `Needs attention`, `Not verified`), real-time cryptographic audit trail hash-chain verification (`verify_audit_log_chain`), and links to code/test evidence.
+A public-facing security transparency page explaining authentication realm separation, tenant project isolation, file security, known architectural boundaries (such as localStorage JavaScript access and unkeyed SHA-256 audit chaining limits), and active responsible disclosure contact through the contact form or GitHub advisory.
 
 ---
 
-## 3️⃣ Client Portal
+## 5️⃣ Admin Security Center (/admin/security)
 
-The client portal provides a **secure space for clients** to track project progress and collaborate with the development team.
-
-Clients can:
-
-* View project progress
-* Track milestones
-* Monitor tasks
-* View project budgets
-* Download shared files
-* Comment on tasks
-* View activity history
-* Communicate through per-project chat
-
-This improves **transparency and communication between developers and clients**.
+A restricted management portal view backed by authenticated endpoint GET /api/admins/security-overview. It presents verified status rows (Verified, Needs attention, Not verified), real-time cryptographic audit trail hash-chain verification (erify_audit_log_chain), and links to code/test evidence.
 
 ---
 

@@ -2374,3 +2374,132 @@ Review and correct the audit and deployment-verification gaps in the current MET
 - Update documentation and test counts.
 - Sync changes and prepare a clean commit.
 ```
+
+
+### C50 — Job Evaluation Preparation: Product Clarity, Verifiable Security Disclosures, Reproducible Evaluation Guide, and Comprehensive Threat Register
+
+```text
+Continue the METECHQ project from the current main branch, reported at commit bfdefc6. First inspect the repository, current implementation, deployment configuration, tests, and existing documentation. Treat the repository and CI as the source of truth; do not assume that a feature or hosted control works just because a report says it does.
+
+## Goal
+
+Prepare METECHQ for a job evaluation by making its purpose clear, presenting its security controls honestly, and giving an evaluator a reproducible way to verify the work.
+
+Evaluation categories:
+- Security: 35
+- Threat analysis and testing: 15
+- Functionality: 15
+- AI usage and prompt documentation: 15
+- Engineering quality: 10
+- Documentation, deployment and demo: 10
+
+Do not add security claims, badges, certifications, test results, or live status indicators without evidence.
+
+## 1. Clarify the product on the homepage
+
+Inspect the current pages and routes, then describe the product accurately as a public portfolio/services website with projects, blogs, and contact features, supported by administrator content-management tools and a client workspace. Confirm the exact client features in the code before listing them.
+
+Improve the homepage so a first-time visitor can quickly understand:
+- What METECHQ is and who it serves.
+- What visitors can explore or do.
+- What authenticated administrators and clients can do, if those workflows are genuinely implemented.
+- Where to find Security & Privacy information.
+
+Add a compact, accessible security and privacy summary on the homepage with a clear link to `/security`. Keep it understandable to a nontechnical visitor. Do not put secrets, customer information, internal audit records, or sensitive infrastructure details on the public homepage.
+
+## 2. Build a trustworthy public Security & Privacy evidence page
+
+Review the existing `/security` page and update it to match the actual implementation. For each security statement, show:
+- The control in plain language.
+- The evidence source, such as a test, code location, CI run, or live check.
+- The scope of what was verified.
+- Any limitation that materially affects the claim.
+- A verification date only when it is derived from real evidence; do not use placeholder or fabricated dates.
+
+Cover relevant controls only when confirmed in code, including:
+- Separate administrator and client authentication realms.
+- Server-side client-to-tenant/project scoping.
+- Login rate limiting and whether it is process-local or Redis-shared.
+- Upload size/type checks and path confinement.
+- Administrative audit logging and what its unkeyed SHA-256 chain does and does not protect against.
+- Security headers and the deployment state of those headers.
+- Dependency findings and the distinction between runtime and build-tool dependencies.
+- The security reporting route, using only contact methods that actually work.
+
+Be explicit that JWTs stored in `localStorage` are accessible to JavaScript. Do not imply that a strict CSP eliminates all XSS risk or makes localStorage equivalent to HttpOnly cookies.
+
+Never claim “100% secure,” “zero vulnerabilities,” “database-proof audit logs,” or “fully verified in production” without evidence.
+
+## 3. Give evaluators a safe, reproducible verification path
+
+Create or improve a reviewer-facing verification guide that lets someone independently check the claims without privileged access or destructive testing.
+
+Include:
+- Repository prerequisites and exact setup commands.
+- Exact backend, frontend, build, dependency-audit, secret-scan, and hosted-header commands.
+- Expected outcomes, including the current known dependency-audit baseline.
+- Links to the relevant tests, scripts, documentation, and successful GitHub Actions run.
+- A table mapping each security claim to its evidence and verification method.
+- A safe manual test plan using synthetic accounts and data.
+- Clear instructions not to test against real customer data or perform destructive production actions.
+- A short demonstration sequence: public visitor flow, relevant client flow, administrator flow, then security evidence.
+- Screenshots or other evidence only if actually captured; never invent screenshots or test output.
+
+Make the hosted-header guide clearly separate:
+1. local/repository evidence,
+2. CI evidence,
+3. live hosted evidence.
+
+The latest report says the live verifier currently detects a deployment discrepancy. Keep hosted status marked “Pending deployment” until the corrected headers are observed on the actual deployed URLs after redeploying the latest commit. Do not change the live provider settings or claim they were changed if dashboard access is unavailable.
+
+## 4. Threat analysis and test coverage
+
+Create or reconcile a threat model and risk register based on the actual application architecture and routes. Include:
+- Assets, trust boundaries, actors, and sensitive data.
+- Public, administrator, and client endpoint groups.
+- Threat scenarios such as broken access control/IDOR, credential attacks, cross-tenant access, unsafe uploads, XSS, CSRF where applicable, dependency compromise, audit-log manipulation, proxy-header abuse, and deployment misconfiguration.
+- Likelihood, impact, mitigations, test evidence, residual risk, and owner/next action.
+- Which tests are automated and which items remain manual or hosted-environment checks.
+
+Use concrete evidence. Do not write “zero IDOR” as an absolute claim; describe the tested tenant-isolation cases and their scope.
+
+Run only authorized tests against the project’s isolated test environment. Use synthetic test accounts/data. Do not fuzz, load-test, or alter production data.
+
+## 5. Keep the evidence and dashboard boundaries accurate
+
+Reconcile README, SECURITY_SETUP.md, THREATS.md, docs/EVALUATION_GUIDE.md, docs/verification/README.md, the public `/security` page, and the admin Security Center so their statuses and numbers agree.
+
+For each item, label it as one of:
+- Verified by automated test
+- Verified by CI
+- Verified against live deployment
+- Documented but not verified
+- Needs dashboard action
+
+Preserve the current audit findings; do not suppress advisories or weaken thresholds to get green CI. Ensure the audit checker fails on command errors, missing summaries, increased findings beyond policy, and unapproved vulnerable packages. Ensure hosted verification exits non-zero when required checks fail.
+
+Keep the admin Security Center authenticated and avoid exposing internal details publicly. The public page may link to public repository evidence and CI, but must not expose private client data, tokens, audit-log contents, or operational secrets.
+
+## 6. AI usage and engineering documentation
+
+Update `PROMPTS.md` with the work performed and the final prompt used, following the repository’s existing format and its no-calendar-date rule. Do not claim AI generated or tested something unless that actually happened.
+
+Document meaningful design decisions, assumptions, files changed, commands run, failures, fixes, and remaining risks. Keep the docs concise enough for an evaluator to follow, but detailed enough to reproduce the checks.
+
+## 7. Completion report and acceptance criteria
+
+After implementation:
+- Run the existing relevant backend suite, frontend suite, production build, dependency audit evaluator, and secret scanner.
+- Run the hosted-header verifier only against the actual deployed URLs; if deployment is not updated, report its failure/pending state accurately.
+- Do not weaken or delete tests to obtain a pass.
+- Check that homepage and security-page claims match code and evidence.
+- Finish with a concise report containing:
+  - What changed and why.
+  - Exact test/audit/build results.
+  - A claim-to-evidence verification table.
+  - Remaining dependency and hosted risks.
+  - Any Vercel, Render, or MongoDB dashboard action still required.
+  - A short evaluator demo script.
+
+Do not push, redeploy, or change provider dashboard settings unless those actions are explicitly available and authorized. Leave a clean, reviewable implementation and explain any remaining manual step.
+```
