@@ -2503,3 +2503,27 @@ After implementation:
 
 Do not push, redeploy, or change provider dashboard settings unless those actions are explicitly available and authorized. Leave a clean, reviewable implementation and explain any remaining manual step.
 ```
+
+
+### C51 — Local Setup Guide & Copy-and-Run Command Instructions
+
+```text
+Create `docs/LOCAL_SETUP.md` and link it from `README.md` and `docs/EVALUATION_GUIDE.md`.
+
+Inspect the repository before writing commands. Confirm the actual environment-template path, Python and Node versions, frontend package manager, backend port, MongoDB configuration, and whether the test runner creates its own isolated database. Do not guess paths or settings. Never tell the user to use production secrets or a production database for local testing.
+
+Write complete instructions for Windows PowerShell first, then macOS/Linux Bash. Commands must be copyable in order, with separate terminal instructions for backend and frontend. Include expected local URLs and common startup errors.
+
+The guide must cover:
+
+1. Clone the repository and enter its root directory.
+2. Install prerequisites, including supported Python, Node, Yarn, and MongoDB/Docker versions.
+3. Start a local MongoDB instance. If Docker is supported by the project, include the exact local-only Docker command and the matching stop command.
+4. Create and activate a Python virtual environment.
+5. Copy the correct environment template to the exact backend `.env` path and explain the local-only values required. Do not put real credentials in example commands.
+6. Install backend development/runtime dependencies.
+7. Start the backend with the correct working directory, module, host, and port.
+8. Install frontend dependencies from the authoritative lockfile and start the frontend.
+9. Include exact commands to stop the local processes and database.
+10. Explain that the hosted-header verifier checks the deployed URLs; it is not a local-only test.
+```

@@ -19,6 +19,9 @@ This guide provides evaluators and reviewers with a safe, reproducible, step-by-
 
 ## 2. Environment Prerequisites & Setup
 
+> [!TIP]
+> **Complete Copy-and-Run Walkthrough:** For full terminal commands for Windows PowerShell and macOS/Linux Bash, see the dedicated **[Local Setup Guide](LOCAL_SETUP.md)**.
+
 ### Prerequisites
 - **Python**: 3.10 or higher
 - **Node.js**: 18.x or 20.x

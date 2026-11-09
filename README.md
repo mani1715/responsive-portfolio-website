@@ -3,7 +3,7 @@
 > - ⚡ **Live API Backend (Render)**: [https://metechq.onrender.com](https://metechq.onrender.com)
 > - 📚 **Interactive Swagger Docs**: [https://metechq.onrender.com/docs](https://metechq.onrender.com/docs)
 >
-> **Project Evidence Documents**: [Evaluation Guide](docs/EVALUATION_GUIDE.md) | [Threat Model & Security](THREATS.md) | [Security Architecture](SECURITY_SETUP.md) | [Prompt History](PROMPTS.md) | [Portfolio & Client Guide](docs/PORTFOLIO_AND_CLIENT_GUIDE.md)
+> **Project Evidence Documents**: [Evaluation Guide](docs/EVALUATION_GUIDE.md) | [Local Setup Guide](docs/LOCAL_SETUP.md) | [Threat Model & Security](THREATS.md) | [Security Architecture](SECURITY_SETUP.md) | [Prompt History](PROMPTS.md) | [Portfolio & Client Guide](docs/PORTFOLIO_AND_CLIENT_GUIDE.md)
 
 # 🚀 METECHQ – Portfolio & Client Management Platform
 
